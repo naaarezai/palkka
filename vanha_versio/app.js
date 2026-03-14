@@ -84,17 +84,16 @@ function initAuthUI() {
         modal.style.display = 'none';
     });
     
-    document.getElementById('auth-switch-link').addEventListener('click', (e) => {
-        e.preventDefault();
-        isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Kirjaudu Sisään" : "Luo Tili";
-        document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Kirjaudu" : "Rekisteröidy";
-        document.getElementById('auth-switch-text').innerHTML = isLoginMode 
-            ? 'Etkö omista tiliä? <a href="#" id="auth-switch-link">Rekisteröidy tästä</a>.'
-            : 'Onko sinulla jo tili? <a href="#" id="auth-switch-link">Kirjaudu tästä</a>.';
-        
-        // Re-attach listener dynamically
-        document.getElementById('auth-switch-link').addEventListener('click', arguments.callee);
+    document.getElementById('auth-switch-text').addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'auth-switch-link') {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "Kirjaudu Sisään" : "Luo Tili";
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Kirjaudu" : "Rekisteröidy";
+            document.getElementById('auth-switch-text').innerHTML = isLoginMode 
+                ? 'Etkö omista tiliä? <a href="#" id="auth-switch-link">Rekisteröidy tästä</a>.'
+                : 'Onko sinulla jo tili? <a href="#" id="auth-switch-link">Kirjaudu tästä</a>.';
+        }
     });
 
     document.getElementById('auth-submit-btn').addEventListener('click', async () => {
@@ -132,45 +131,52 @@ function initAuthUI() {
     });
 }
 
-// --- DATE & TIME PICKERS ---
 function initDatePickers() {
-    const commonConfig = {
-        time_24hr: true,
-        locale: "fi",
-        allowInput: false,
-        disableMobile: "true"
-    };
+    try {
+        if (typeof flatpickr === 'undefined') {
+            console.error("Flatpickr library is not loaded!");
+            return;
+        }
 
-    flatpickr("#shift-start", {
-        ...commonConfig,
-        enableTime: true,
-        dateFormat: "Y-m-d\\TH:i",
-    });
+        const commonConfig = {
+            time_24hr: true,
+            locale: "fi"
+        };
 
-    flatpickr("#shift-end", {
-        ...commonConfig,
-        enableTime: true,
-        dateFormat: "Y-m-d\\TH:i",
-    });
+        flatpickr("#shift-start", {
+            ...commonConfig,
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+        });
 
-    flatpickr("#break-start", {
-        ...commonConfig,
-        enableTime: true,
-        noCalendar: true,
-        dateFormat: "H:i",
-    });
+        flatpickr("#shift-end", {
+            ...commonConfig,
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+        });
 
-    flatpickr("#break-end", {
-        ...commonConfig,
-        enableTime: true,
-        noCalendar: true,
-        dateFormat: "H:i",
-    });
+        flatpickr("#break-start", {
+            ...commonConfig,
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+        });
 
-    flatpickr("#period-start", {
-        ...commonConfig,
-        dateFormat: "Y-m-d",
-    });
+        flatpickr("#break-end", {
+            ...commonConfig,
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+        });
+
+        flatpickr("#period-start", {
+            ...commonConfig,
+            dateFormat: "Y-m-d",
+        });
+        console.log("Flatpickr initialized successfully");
+    } catch (error) {
+        console.error("Error initializing DatePickers:", error);
+    }
 }
 
 function updateDbStatusUI() {
