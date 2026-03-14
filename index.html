@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKT Palkanlaskenta</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Flatpickr for Date/Time picking -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/fi.js"></script>
+</head>
+<body>
+    <div class="auth-bar">
+        <div id="user-info" style="display:none;">
+            Käyttäjä: <span id="user-email"></span>
+            <button id="logout-btn" class="text-btn">Kirjaudu ulos</button>
+        </div>
+        <div id="login-actions">
+            <button id="show-login-btn" class="text-btn">Kirjaudu / Rekisteröidy</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <h1>AKT Palkanlaskenta</h1>
+            <p>Kuljetusalan TES-pohjainen laskuri</p>
+            <div id="db-status" class="db-status local">Paikallinen tallennus (Kirjaudu synkronoidaksesi)</div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="calculator-tab">Laskuri</button>
+            <button class="tab-btn" data-tab="dashboard-tab">Omat vuorot</button>
+        </nav>
+
+        <main>
+            <div id="calculator-tab" class="tab-content active">
+                <section class="card settings-section">
+                <h2><span class="icon">⚙️</span> Asetukset (Pysyvät tiedot)</h2>
+                <div class="input-group">
+                    <label for="base-wage">Perustuntipalkka / Taulukkopalkka (€/h)</label>
+                    <input type="number" id="base-wage" step="0.01" value="16.50">
+                </div>
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label for="evening-bonus">Iltalisä (%)</label>
+                        <input type="number" id="evening-bonus" value="15">
+                        <span class="help-text">Tyypillisesti klo 18-22</span>
+                    </div>
+                    <div class="input-group half">
+                        <label for="night-bonus">Yölisä (%)</label>
+                        <input type="number" id="night-bonus" value="20">
+                        <span class="help-text">Tyypillisesti klo 22-06</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="sunday-bonus">Sunnuntai/Vapaapäivätyölisä (%)</label>
+                    <input type="number" id="sunday-bonus" value="100">
+                </div>
+            </section>
+
+            <section class="card shift-section">
+                <h2><span class="icon">⏱️</span> Vuoron syöttö</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="shift-start">Vuoron alku</label>
+                        <input type="text" id="shift-start" placeholder="Valitse päivä ja aika">
+                    </div>
+                    <div class="input-group">
+                        <label for="shift-end">Vuoron loppu</label>
+                        <input type="text" id="shift-end" placeholder="Valitse päivä ja aika">
+                    </div>
+                </div>
+                
+                <div class="break-section">
+                    <h3>Tauko</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="break-start">Tauko alkaa</label>
+                            <input type="text" id="break-start" placeholder="Esim. 19:00">
+                        </div>
+                        <div class="input-group">
+                            <label for="break-end">Tauko päättyy</label>
+                            <input type="text" id="break-end" placeholder="Esim. 19:45">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="allowances-section">
+                    <h3>Korvaukset</h3>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="allowance-meal">
+                        <span class="checkmark"></span>
+                        Oikeus ateriakorvaukseen
+                    </label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="allowance-half">
+                        <span class="checkmark"></span>
+                        Oikeus osapäivärahaan (yli 10h matka)
+                    </label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="allowance-full">
+                        <span class="checkmark"></span>
+                        Oikeus kokopäivärahaan
+                    </label>
+                </div>
+
+                <button id="calculate-btn" class="primary-btn">Laske palkka</button>
+            </section>
+
+            <section class="card results-section" id="results-section" style="display: none;">
+                <h2><span class="icon">📊</span> Laskelman tulos</h2>
+                
+                <div class="result-summary">
+                    <div class="summary-item">
+                        <span class="label">Kokonaisbruttotyöaika</span>
+                        <span class="value" id="res-total-time">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Palkallinen työaika</span>
+                        <span class="value highlight" id="res-paid-time">-</span>
+                    </div>
+                </div>
+
+                <div class="result-details">
+                    <h3>Palkan ja lisien erittely</h3>
+                    <ul class="breakdown-list" id="res-breakdown">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+
+                <div class="allowance-recommendation" id="allowance-recommendation" style="display:none;">
+                    <span class="icon">💡</span>
+                    <p>Huom! Työvuoro ylittää 10 tuntia. Muista tarkistaa oikeus osapäivärahaan tai ateriakorvaukseen.</p>
+                </div>
+
+                <div class="save-actions" style="margin-top: 1.5rem;">
+                    <button id="save-shift-btn" class="primary-btn" style="background: var(--success-color);">Tallenna vuoro</button>
+                </div>
+            </section>
+            </div> <!-- End Calculator Tab -->
+
+            <div id="dashboard-tab" class="tab-content" style="display: none;">
+                <section class="card summary-section">
+                    <h2><span class="icon">📅</span> Palkanmaksukausi (2 viikkoa)</h2>
+                    <div class="period-selector">
+                        <div class="input-group">
+                            <label for="period-start">Valitse jakson alkamispäivä</label>
+                            <input type="text" id="period-start" placeholder="Valitse päivämäärä">
+                        </div>
+                    </div>
+                    
+                    <div id="period-results" style="display: none; margin-top: 1rem;">
+                        <h3 style="margin-bottom: 0.5rem; text-align: center; color: var(--accent-color);" id="period-range-display"></h3>
+                        <div class="result-summary">
+                            <div class="summary-item">
+                                <span class="label">Palkka yhteensä</span>
+                                <span class="value highlight" id="period-total-pay">0.00 €</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Palkallinen aika</span>
+                                <span class="value" id="period-total-time">0 h</span>
+                            </div>
+                        </div>
+                        <ul class="breakdown-list" id="period-breakdown">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="card shift-list-section">
+                    <h2><span class="icon">📋</span> Tallennetut vuorot</h2>
+                    <p id="cloud-sync-info" style="font-size: 0.8rem; color: var(--accent-color); margin-bottom: 1rem; text-align: center; display: none;">☁️ Vuorot synkronoidaan pilveen.</p>
+                    <div id="saved-shifts-container">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">Ei tallennettuja vuoroja.</p>
+                    </div>
+                </section>
+            </div> <!-- End Dashboard Tab -->
+        </main>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content card">
+            <span class="close-btn" id="close-auth-modal">&times;</span>
+            <h2 id="auth-title">Kirjaudu Sisään</h2>
+            <div class="input-group">
+                <label for="auth-email">Sähköposti</label>
+                <input type="email" id="auth-email" placeholder="nimi@esimerkki.fi">
+            </div>
+            <div class="input-group">
+                <label for="auth-password">Salasana</label>
+                <input type="password" id="auth-password" placeholder="Min. 6 merkkiä">
+            </div>
+            <button id="auth-submit-btn" class="primary-btn">Kirjaudu</button>
+            <p class="auth-switch" id="auth-switch-text">Etkö omista tiliä? <a href="#" id="auth-switch-link">Rekisteröidy tästä</a>.</p>
+            
+            <p class="help-text" style="margin-top: 1.5rem; text-align:center;">
+                <em>Tietokantayhteys vaatii asetetut Supabase-avaimet <code>app.js</code>-tiedostossa. Jos avaimet puuttuvat, sovellus toimii offline-tilassa laitteen omalla muistilla.</em>
+            </p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
