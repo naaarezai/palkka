@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { calculateSalary, CalculationResult } from "../utils/calculator";
-import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut } from "lucide-react";
+import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2 } from "lucide-react";
 import { supabase } from "../utils/supabase";
 import AuthModal from "./AuthModal";
 
