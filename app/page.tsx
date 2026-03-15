@@ -370,23 +370,9 @@ export default function Home() {
                 <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Palkan ja lisien erittely</h3>
                 
                 <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                  <span className="text-slate-300">Normaali työaika <span className="text-slate-500 text-sm ml-2">({formatDuration(result.normalMinutes)})</span></span>
+                  <span className="text-slate-300">Normaali työmaa / Brutto <span className="text-slate-500 text-sm ml-2">({formatDuration(result.paidMinutes)})</span></span>
                   <span className="font-medium">{result.normalPay?.toFixed(2)} €</span>
                 </div>
-                
-                {result.overtime50Minutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Vuorokautinen ylityö 50 % <span className="text-slate-500 text-sm ml-2">({formatDuration(result.overtime50Minutes)})</span></span>
-                    <span className="font-medium text-amber-300">{result.overtime50Pay?.toFixed(2)} €</span>
-                  </div>
-                )}
-                
-                {result.overtime100Minutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Vuorokautinen ylityö 100 % <span className="text-slate-500 text-sm ml-2">({formatDuration(result.overtime100Minutes)})</span></span>
-                    <span className="font-medium text-orange-400">{result.overtime100Pay?.toFixed(2)} €</span>
-                  </div>
-                )}
 
                 {result.eveningMinutes > 0 && (
                   <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
@@ -415,7 +401,7 @@ export default function Home() {
                     <span className="font-medium text-teal-300">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
                 )}
-
+                
                 {result.holidayMinutes > 0 && (
                   <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
                     <span className="text-slate-300">Arkipyhälisä (100%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.holidayMinutes)})</span></span>
@@ -495,17 +481,13 @@ export default function Home() {
                      
                      // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
                      const totalHours = totalMinutes / 60;
-                     const sumDaily50 = periodShifts.reduce((sum, s) => sum + (Number(s.overtime50_minutes) || 0), 0) / 60;
-                     const sumDaily100 = periodShifts.reduce((sum, s) => sum + (Number(s.overtime100_minutes) || 0), 0) / 60;
                      
                      // Jakson ylityörajat: 80h asti normaali, 80-92h 50%, yli 92h 100%
                      const periodOvertime50 = Math.max(0, Math.min(totalHours, 92) - 80);
                      const periodOvertime100 = Math.max(0, totalHours - 92);
                      
-                     // TES: Maksetaan suuremman mukaan (vuorokautinen vs jakson ylityö)
-                     const extra50 = Math.max(0, periodOvertime50 - sumDaily50);
-                     const extra100 = Math.max(0, periodOvertime100 - sumDaily100);
-                     const extraPay = (extra50 * (parseFloat(baseWage) * 0.5)) + (extra100 * (parseFloat(baseWage) * 1.0));
+                     // Lasketaan ylityölisän arvo (50% ja 100% lisäosan osuus)
+                     const periodOvertimePay = (periodOvertime50 * (parseFloat(baseWage) * 0.5)) + (periodOvertime100 * (parseFloat(baseWage) * 1.0));
 
                      return (
                        <div key={periodKey} className="space-y-3">
@@ -525,19 +507,19 @@ export default function Home() {
                                </div>
                              </div>
                              <div className="text-right">
-                               <div className="text-emerald-400 font-black text-xl">{(totalPay + extraPay).toFixed(2)} €</div>
+                               <div className="text-emerald-400 font-black text-xl">{(totalPay + periodOvertimePay).toFixed(2)} €</div>
                                <div className="text-xs text-slate-500">jakson arvioitu palkka</div>
                              </div>
                            </div>
                            
                            {/* Jaksotyöylityö-ilmoitus */}
-                           {(extra50 > 0 || extra100 > 0) && (
+                           {(periodOvertime50 > 0 || periodOvertime100 > 0) && (
                              <div className="mt-2 py-2 px-3 bg-amber-950/20 border border-amber-900/30 rounded-lg flex items-center justify-between text-xs">
                                <span className="text-amber-200 flex items-center gap-2">
                                  <Settings size={14} />
-                                 Jakson ylityölisä (80h ylitys): {extra50 > 0 && `${extra50.toFixed(1)}h (50%)`} {extra100 > 0 && `${extra100.toFixed(1)}h (100%)`}
+                                 Jakson ylityö (vasta 80h jälkeen): {periodOvertime50 > 0 && `${periodOvertime50.toFixed(1)}h (50%)`} {periodOvertime100 > 0 && `${periodOvertime100.toFixed(1)}h (100%)`}
                                </span>
-                               <span className="text-amber-300 font-bold">+ {extraPay.toFixed(2)} €</span>
+                               <span className="text-amber-300 font-bold">+ {periodOvertimePay.toFixed(2)} €</span>
                              </div>
                            )}
                          </div>

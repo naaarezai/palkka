@@ -90,40 +90,33 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     }
   }
 
-  const normalMinutes = Math.min(paidMinutes, 8 * 60);
-  const overtimeMinutes = Math.max(0, paidMinutes - 8 * 60);
-  const overtime50Minutes = Math.min(overtimeMinutes, 2 * 60);
-  const overtime100Minutes = Math.max(0, overtimeMinutes - 2 * 60);
-
   // Pay calculation
   const basePerMin = baseWage / 60;
   
-  const normalPay = normalMinutes * basePerMin;
-  const overtime50Pay = overtime50Minutes * basePerMin * 1.5;
-  const overtime100Pay = overtime100Minutes * basePerMin * 2.0;
+  const normalPay = paidMinutes * basePerMin;
   
   const eveningPay = eveningMinutes * basePerMin * 0.15;
   const nightPay = nightMinutes * basePerMin * 0.20;
   const sundayPay = sundayMinutes * basePerMin * 1.0;
   const saturdayPay = saturdayMinutes * basePerMin * 0.10;
-  const holidayPay = holidayMinutes * basePerMin * 1.0;  // Sama 100% kuin sunnuntai
+  const holidayPay = holidayMinutes * basePerMin * 1.0;
   
-  const totalPay = normalPay + overtime50Pay + overtime100Pay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
+  const totalPay = normalPay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
 
   return {
     totalMinutes,
     paidMinutes,
-    normalMinutes,
-    overtime50Minutes,
-    overtime100Minutes,
+    normalMinutes: paidMinutes,
+    overtime50Minutes: 0,
+    overtime100Minutes: 0,
     eveningMinutes,
     nightMinutes,
     sundayMinutes,
     saturdayMinutes,
     holidayMinutes,
     normalPay,
-    overtime50Pay,
-    overtime100Pay,
+    overtime50Pay: 0,
+    overtime100Pay: 0,
     eveningPay,
     nightPay,
     sundayPay,
@@ -132,3 +125,4 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     totalPay
   };
 }
+
