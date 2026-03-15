@@ -14,14 +14,16 @@ export interface CalculationResult {
   eveningMinutes: number;
   nightMinutes: number;
   sundayMinutes: number;
+  saturdayMinutes: number;
   
-  // Euro ammounts based on AKT percentages
+  // Euro amounts based on AKT percentages
   normalPay?: number;
   overtime50Pay?: number;
   overtime100Pay?: number;
   eveningPay?: number;       // 15%
   nightPay?: number;         // 20%
   sundayPay?: number;        // 100%
+  saturdayPay?: number;      // 10% (15:00 - 18:00)
   totalPay?: number;
 }
 
@@ -33,6 +35,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   let eveningMinutes = 0;
   let nightMinutes = 0;
   let sundayMinutes = 0;
+  let saturdayMinutes = 0;
 
   // We iterate minute by minute
   for (let m = new Date(startTime); m < endTime; m.setMinutes(m.getMinutes() + 1)) {
@@ -50,7 +53,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     if (!isBreak) {
       paidMinutes++;
       const hours = m.getHours();
-      const day = m.getDay(); // 0 is Sunday
+      const day = m.getDay(); // 0 is Sunday, 6 is Saturday
 
       // Evening time (18:00 - 22:00)
       if (hours >= 18 && hours < 22) {
@@ -60,6 +63,13 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
       // Night time (22:00 - 06:00)
       if (hours >= 22 || hours < 6) {
         nightMinutes++;
+      }
+      
+      // Saturday bonus (15:00 - 18:00)
+      // Only paid on Saturdays (day 6) and if not some other bonus? 
+      // PDF line 125: "arkilauantaina klo 15.00-18.00"
+      if (day === 6 && hours >= 15 && hours < 18) {
+        saturdayMinutes++;
       }
       
       // Sunday time
@@ -84,8 +94,9 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   const eveningPay = eveningMinutes * basePerMin * 0.15;
   const nightPay = nightMinutes * basePerMin * 0.20;
   const sundayPay = sundayMinutes * basePerMin * 1.0;
+  const saturdayPay = saturdayMinutes * basePerMin * 0.10; // Saturday 15:00-18:00
   
-  const totalPay = normalPay + overtime50Pay + overtime100Pay + eveningPay + nightPay + sundayPay;
+  const totalPay = normalPay + overtime50Pay + overtime100Pay + eveningPay + nightPay + sundayPay + saturdayPay;
 
   return {
     totalMinutes,
@@ -96,12 +107,14 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     eveningMinutes,
     nightMinutes,
     sundayMinutes,
+    saturdayMinutes,
     normalPay,
     overtime50Pay,
     overtime100Pay,
     eveningPay,
     nightPay,
     sundayPay,
+    saturdayPay,
     totalPay
   };
 }

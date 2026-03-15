@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/nasra/OneDrive%20-%20Kaakkois-Suomen%20ammattikorkeakoulu%20Oy/Ty%C3%B6p%C3%B6yt%C3%A4/palkka/app/auth/auth-code-error/page.tsx"],"sourcesContent":["export default function AuthCodeError() {\n  return (\n    <div className=\"min-h-screen bg-slate-900 flex items-center justify-center p-4 text-center\">\n      <div className=\"max-w-md bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl\">\n        <h1 className=\"text-2xl font-bold text-white mb-4\">Hups! Kirjautumislinkki ei toiminut</h1>\n        <p className=\"text-slate-400 mb-6\">\n          Vaikuttaa siltä, että kirjautumislinkki on vanhentunut tai se on jo käytetty. \n          Kokeile kirjautua uudelleen sähköpostilla ja salasanalla etusivulta.\n        </p>\n        <a \n          href=\"/\" \n          className=\"inline-block bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition\"\n        >\n          Palaa Etusivulle\n        </a>\n      </div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAI,WAAU;;8BACb,8OAAC;oBAAG,WAAU;8BAAqC;;;;;;8BACnD,8OAAC;oBAAE,WAAU;8BAAsB;;;;;;8BAInC,8OAAC;oBACC,MAAK;oBACL,WAAU;8BACX;;;;;;;;;;;;;;;;;AAMT"}}]
+}

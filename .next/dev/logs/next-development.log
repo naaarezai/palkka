@@ -1,0 +1,792 @@
+[00:00:01.281] Server  LOG     ✓ Ready in 942ms
+[00:00:02.140] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:02.324] Browser ERROR   A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
+      <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<SegmentViewNode>} forbidden={undefined} ...>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} segmentPath={[...]} ...>
+              <SegmentViewNode type="page" pagePath="page.tsx">
+                <SegmentTrieNode>
+                <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
+                  <Home params={Promise} searchParams={Promise}>
+                    <div className="max-w-4xl ...">
+                      <header>
+                      <div>
+                      <div className="space-y-6">
+                        <div className="bg-slate-8...">
+                          <h2>
+                          <div className="grid grid-...">
+                            <div>
+                            <div>
+                              <label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value="16.50"
+                                onChange={function onChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-whi..."
+-                               data-np-intersection-state="visible"
+                              >
+                            <div>
+                              <label>
+                              <input
+                                type="number"
+                                value="100"
+                                onChange={function onChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-whi..."
+-                               data-np-intersection-state="visible"
+                              >
+                            <div className="flex gap-4">
+                              <div className="flex-1">
+                                <label>
+                                <input
+                                  type="number"
+                                  value="15"
+                                  onChange={function onChange}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-w..."
+-                                 data-np-intersection-state="visible"
+                                >
+                              <div className="flex-1">
+                                <label>
+                                <input
+                                  type="number"
+                                  value="20"
+                                  onChange={function onChange}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-w..."
+-                                 data-np-intersection-state="visible"
+                                >
+                        <div className="bg-slate-8...">
+                          <h2>
+                          <div className="grid grid-...">
+                            <div>
+                              <label>
+                              <input
+                                type="datetime-local"
+                                value=""
+                                onChange={function onChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-whi..."
+-                               data-np-intersection-state="visible"
+                              >
+                            <div>
+                              <label>
+                              <input
+                                type="datetime-local"
+                                value=""
+                                onChange={function onChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-whi..."
+-                               data-np-intersection-state="visible"
+                              >
+                          <div className="bg-slate-9...">
+                            <h3>
+                            <div className="grid grid-...">
+                              <div>
+                                <label>
+                                <input
+                                  type="time"
+                                  value=""
+                                  onChange={function onChange}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-whi..."
+-                                 data-np-intersection-state="visible"
+                                >
+                              <div>
+                                <label>
+                                <input
+                                  type="time"
+                                  value=""
+                                  onChange={function onChange}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-whi..."
+-                                 data-np-intersection-state="visible"
+                                >
+                          ...
+              ...
+            ...
+
+[00:02:34.402] Server  LOG     ✓ Compiled in 447ms
+[00:02:46.307] Server  LOG     ✓ Compiled in 312ms
+[00:05:04.549] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:05:31.029] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:31.183] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:31.707] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:32.022] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:32.146] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:32.514] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:32.559] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:32.582] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:32.606] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:32.621] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:32.628] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:05:32.776] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:33.683] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:33.683] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:33.683] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:33.683] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.038] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.038] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.038] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.330] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.530] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.656] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.843] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:39.843] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:40.688] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:49.135] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:49.275] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:49.684] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:05:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:06:06.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:06:06.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Module not found: Can't resolve '@supabase/auth-helpers-nextjs'
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+https://nextjs.org/docs/messages/module-not-found
+[00:06:06.881] Server  ERROR   ⨯ ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+[00:06:07.041] Browser ERROR   uncaughtError: Error: ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+[00:06:07.161] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:07.274] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:07.686] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:07.686] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:14.736] Server  LOG     
+[00:06:14.736] Server  LOG     Could not open route.ts in the editor.
+[00:06:14.737] Server  LOG     
+[00:06:14.737] Server  LOG     When running on Windows, file names are checked against an access list to protect against remote code execution attacks. File names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.
+[00:06:14.737] Server  LOG     
+[00:06:15.529] Server  LOG     
+[00:06:15.530] Server  LOG     Could not open route.ts in the editor.
+[00:06:15.530] Server  LOG     
+[00:06:15.530] Server  LOG     When running on Windows, file names are checked against an access list to protect against remote code execution attacks. File names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.
+[00:06:15.531] Server  LOG     
+[00:06:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:49.685] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:51.681] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:51.681] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:51.681] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:52.675] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:59.672] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:06:59.672] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:07:09.332] Server  LOG     ✓ Compiled in 247ms
+[00:07:09.673] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:07:16.676] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:07:16.676] Browser ERROR   ./app/auth/callback/route.ts:1:1
+Export createRouteHandlerClient doesn't exist in target module
+> 1 | import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { cookies } from 'next/headers'
+  3 | import { NextResponse } from 'next/server'
+  4 |
+
+The export createRouteHandlerClient was not found in module [project]/node_modules/@supabase/auth-helpers-nextjs/dist/module/index.js [app-route] (ecmascript).
+Did you mean to import createBrowserClient?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+[00:07:30.189] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:07:30.681] Browser WARN    GoTrueClient@sb-mhkftyrkoclajfldjvcy-auth-token:1 (2.99.1) 2026-03-15T11:13:37.297Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+[00:07:55.882] Server  LOG     ✓ Compiled in 117ms
+[00:08:23.724] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:17.197] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:20.399] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold

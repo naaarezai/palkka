@@ -3,16 +3,33 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { calculateSalary, CalculationResult } from "../utils/calculator";
-import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2 } from "lucide-react";
+import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut } from "lucide-react";
+import { supabase } from "../utils/supabase";
+import AuthModal from "./AuthModal";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"calculator" | "shifts">("calculator");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
   
   // Settings
   const [baseWage, setBaseWage] = useState("16.50");
+  const [experience, setExperience] = useState("default");
   const [eveningBonus, setEveningBonus] = useState("15");
   const [nightBonus, setNightBonus] = useState("20");
   const [sundayBonus, setSundayBonus] = useState("100");
+
+  const WAGE_TABLE = {
+    "default": "16.50",
+    "under4": "16.22",
+    "4to8": "16.46",
+    "8to12": "16.95",
+    "over12": "17.28",
+    "hsl_under4": "17.89",
+    "hsl_4to8": "18.57",
+    "hsl_8to12": "19.28",
+    "hsl_over12": "19.73"
+  };
 
   // Inputs
   const [startInput, setStartInput] = useState("");
@@ -24,17 +41,42 @@ export default function Home() {
 
   useEffect(() => {
     // Load local settings on mount
-    setBaseWage(localStorage.getItem("base-wage") || "16.50");
+    const savedWage = localStorage.getItem("base-wage") || "16.50";
+    setBaseWage(savedWage);
+    setExperience(localStorage.getItem("experience") || "default");
     setEveningBonus(localStorage.getItem("evening-bonus") || "15");
     setNightBonus(localStorage.getItem("night-bonus") || "20");
     setSundayBonus(localStorage.getItem("sunday-bonus") || "100");
+
+    // Auth session
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+      });
+
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
-  const saveSettings = () => {
-    localStorage.setItem("base-wage", baseWage);
+  const saveSettings = (newWage?: string, newExp?: string) => {
+    localStorage.setItem("base-wage", newWage || baseWage);
+    localStorage.setItem("experience", newExp || experience);
     localStorage.setItem("evening-bonus", eveningBonus);
     localStorage.setItem("night-bonus", nightBonus);
     localStorage.setItem("sunday-bonus", sundayBonus);
+  };
+
+  const handleExperienceChange = (exp: string) => {
+    setExperience(exp);
+    const wage = WAGE_TABLE[exp as keyof typeof WAGE_TABLE];
+    if (wage) {
+      setBaseWage(wage);
+      saveSettings(wage, exp);
+    }
   };
 
   const handleCalculate = () => {
@@ -92,13 +134,31 @@ export default function Home() {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">AKT Palkanlaskenta</h1>
           <p className="text-slate-400 mt-1">Kuljetusalan TES-pohjainen laskuri</p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <button className="flex items-center space-x-2 text-sm bg-slate-700 hover:bg-slate-600 transition px-4 py-2 rounded-lg text-slate-200">
-            <UserIcon size={16} />
-            <span>Kirjaudu Pilveen</span>
-          </button>
+        <div className="mt-4 sm:mt-0 flex gap-2">
+          {session ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400 hidden sm:inline">{session.user.email}</span>
+              <button 
+                onClick={() => supabase?.auth.signOut()}
+                className="flex items-center space-x-2 text-sm bg-slate-700 hover:bg-slate-600 transition px-4 py-2 rounded-lg text-slate-200"
+              >
+                <LogOut size={16} />
+                <span>Kirjaudu ulos</span>
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center space-x-2 text-sm bg-blue-600 hover:bg-blue-500 transition px-4 py-2 rounded-lg text-white font-medium shadow-lg shadow-blue-950/20"
+            >
+              <UserIcon size={16} />
+              <span>Luo tili / Kirjaudu</span>
+            </button>
+          )}
         </div>
       </header>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {/* Tabs */}
       <div className="flex space-x-2 mb-6">
@@ -121,28 +181,51 @@ export default function Home() {
       {activeTab === "calculator" && (
         <div className="space-y-6">
           
-          {/* Settings Card */}
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
             <h2 className="text-xl font-semibold mb-4 flex items-center space-x-2 text-slate-200">
               <Settings className="text-blue-400" />
-              <span>Asetukset (Pysyvät tiedot)</span>
+              <span>Asetukset (AUT 2025-2026)</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Perustuntipalkka / Taulukkopalkka (€/h)</label>
-                <input type="number" step="0.01" value={baseWage} onChange={(e) => setBaseWage(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+                <label className="block text-sm font-medium text-slate-400 mb-1">Palveluvuodet (TES Taulukko)</label>
+                <select 
+                  value={experience} 
+                  onChange={(e) => handleExperienceChange(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                >
+                  <option value="default">Määritä itse...</option>
+                  <optgroup label="AKT Linja-auto (Normaali)">
+                    <option value="under4">Alle 4 vuotta (16,22 €)</option>
+                    <option value="4to8">4-8 vuotta (16,46 €)</option>
+                    <option value="8to12">8-12 vuotta (16,95 €)</option>
+                    <option value="over12">Yli 12 vuotta (17,28 €)</option>
+                  </optgroup>
+                  <optgroup label="AKT Linja-auto (HSL-ajot)">
+                    <option value="hsl_under4">Alle 4 vuotta (17,89 €)</option>
+                    <option value="hsl_4to8">4-8 vuotta (18,57 €)</option>
+                    <option value="hsl_8to12">8-12 vuotta (19,28 €)</option>
+                    <option value="hsl_over12">Yli 12 vuotta (19,73 €)</option>
+                  </optgroup>
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Sunnuntai/Vapaapäivätyölisä (%)</label>
-                <input type="number" value={sundayBonus} onChange={(e) => setSundayBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+                <label className="block text-sm font-medium text-slate-400 mb-1">Perustuntipalkka (€/h)</label>
+                <input type="number" step="0.01" value={baseWage} onChange={(e) => { setBaseWage(e.target.value); setExperience("default"); }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Iltalisä (%) - klo 18-22</label>
-                <input type="number" value={eveningBonus} onChange={(e) => setEveningBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+                <label className="block text-sm font-medium text-slate-400 mb-1">Sunnuntai/vapaapäivätyölisä (%)</label>
+                <input type="number" value={sundayBonus} onChange={(e) => setSundayBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Yölisä (%) - klo 22-06</label>
-                <input type="number" value={nightBonus} onChange={(e) => setNightBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Iltalisä (%)</label>
+                  <input type="number" value={eveningBonus} onChange={(e) => setEveningBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Yölisä (%)</label>
+                  <input type="number" value={nightBonus} onChange={(e) => setNightBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                </div>
               </div>
             </div>
           </div>
@@ -240,6 +323,13 @@ export default function Home() {
                   <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
                     <span className="text-slate-300">Sunnuntaityölisä ({sundayBonus}%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.sundayMinutes)})</span></span>
                     <span className="font-medium text-pink-300">{result.sundayPay?.toFixed(2)} €</span>
+                  </div>
+                )}
+
+                {result.saturdayMinutes > 0 && (
+                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
+                    <span className="text-slate-300">Lauantailisä (10%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.saturdayMinutes)})</span></span>
+                    <span className="font-medium text-teal-300">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
                 )}
                 
