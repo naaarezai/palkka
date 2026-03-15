@@ -36,8 +36,11 @@ export default function Home() {
   const [endInput, setEndInput] = useState("");
   const [breakStart, setBreakStart] = useState("");
   const [breakEnd, setBreakEnd] = useState("");
+  const [isLoadingShifts, setIsLoadingShifts] = useState(false);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
+  const [savedShifts, setSavedShifts] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     // Load local settings on mount
@@ -52,15 +55,92 @@ export default function Home() {
     if (supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
+        if (session) fetchShifts();
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         setSession(session);
+        if (session) fetchShifts();
       });
 
       return () => subscription.unsubscribe();
     }
   }, []);
+
+  const fetchShifts = async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from("shifts")
+      .select("*")
+      .order("date", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching shifts:", error);
+    } else {
+      setSavedShifts(data || []);
+    }
+  };
+
+  const handleSaveShift = async () => {
+    if (!session || !result || !supabase) {
+      alert("Kirjaudu sisään tallentaaksesi vuoroja!");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("shifts").insert({
+        user_id: session.user.id,
+        date: new Date(startInput).toISOString(),
+        start_input: startInput,
+        end_input: endInput,
+        break_start_str: breakStart,
+        break_end_str: breakEnd,
+        total_minutes: result.totalMinutes,
+        paid_minutes: result.paidMinutes,
+        normal_minutes: result.normalMinutes,
+        normal_pay: result.normalPay,
+        overtime50_minutes: result.overtime50Minutes,
+        ot50_pay: result.overtime50Pay,
+        overtime100_minutes: result.overtime100Minutes,
+        ot100_pay: result.overtime100Pay,
+        evening_minutes: result.eveningMinutes,
+        evening_pay: result.eveningPay,
+        night_minutes: result.nightMinutes,
+        night_pay: result.nightPay,
+        saturday_minutes: result.saturdayMinutes,
+        saturday_pay: result.saturdayPay,
+        sunday_minutes: result.sundayMinutes,
+        sunday_pay: result.sundayPay,
+        total_pay: result.totalPay,
+        experience_level: experience,
+        base_wage: parseFloat(baseWage)
+      });
+
+      if (error) throw error;
+      
+      alert("Vuoro tallennettu onnistuneesti!");
+      fetchShifts();
+      setActiveTab("shifts");
+    } catch (err: any) {
+      alert("Virhe tallennuksessa: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteShift = async (id: string) => {
+    if (!supabase) return;
+    if (!confirm("Haluatko varmasti poistaa tämän vuoron?")) return;
+
+    const { error } = await supabase.from("shifts").delete().eq("id", id);
+    if (error) {
+      alert("Virhe poistossa: " + error.message);
+    } else {
+      fetchShifts();
+    }
+  };
 
   const saveSettings = (newWage?: string, newExp?: string) => {
     localStorage.setItem("base-wage", newWage || baseWage);
@@ -341,8 +421,12 @@ export default function Home() {
               </div>
               
               <div className="mt-6 flex gap-3">
-                <button className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition flex items-center justify-center space-x-2">
-                  <Save size={18} />
+                <button 
+                  onClick={handleSaveShift}
+                  disabled={isSaving}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-medium rounded-xl transition flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                   <span>Tallenna Vuoro</span>
                 </button>
               </div>
@@ -355,8 +439,43 @@ export default function Home() {
       {activeTab === "shifts" && (
         <div className="space-y-6 animate-in fade-in">
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-             <h2 className="text-xl font-semibold mb-4 text-slate-200">Tallennetut vuorot</h2>
-             <p className="text-slate-400 text-sm">Omat vuorot näkyvät tässä (Keskeneräinen).</p>
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-xl font-semibold text-slate-200">Tallennetut vuorot ({savedShifts.length})</h2>
+               <button onClick={fetchShifts} className="p-2 hover:bg-slate-700 rounded-lg transition text-slate-400">
+                 <Clock size={20} />
+               </button>
+             </div>
+             
+             {savedShifts.length === 0 ? (
+               <div className="text-center py-10">
+                 <p className="text-slate-500 italic mb-4">Ei vielä tallennettuja vuoroja.</p>
+                 <button onClick={() => setActiveTab("calculator")} className="text-blue-400 hover:underline">Lisää ensimmäinen vuoro tästä</button>
+               </div>
+             ) : (
+               <div className="space-y-4">
+                 {savedShifts.map((shift) => (
+                   <div key={shift.id} className="bg-slate-900/50 border border-slate-700 p-4 rounded-xl flex justify-between items-center group hover:border-slate-500 transition shadow-sm">
+                     <div className="space-y-1">
+                       <div className="text-white font-semibold">
+                         {format(new Date(shift.date), "dd.MM.yyyy")}
+                       </div>
+                       <div className="text-sm text-slate-400">
+                         {format(new Date(shift.start_input), "HH:mm")} - {format(new Date(shift.end_input), "HH:mm")}
+                       </div>
+                       <div className="text-emerald-400 font-bold text-lg">
+                         {(Number(shift.total_pay) || 0).toFixed(2)} €
+                       </div>
+                     </div>
+                     <button 
+                      onClick={() => handleDeleteShift(shift.id)}
+                      className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition opacity-0 group-hover:opacity-100"
+                     >
+                       <Trash2 size={18} />
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
         </div>
       )}
