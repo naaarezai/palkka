@@ -461,8 +461,8 @@ export default function Home() {
                  // Laske viikon numero
                  const startOfYear = new Date(monday.getFullYear(), 0, 1);
                  const weekNum = Math.ceil(((monday.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-                 // Parillinen viikko = jakson alku, pariton = edellinen viikko on alku
-                 const periodWeek = weekNum % 2 === 1 ? weekNum : weekNum - 1;
+                 // Parillinen viikko (esim. 16.2.2026 Viikko 8) aloittaa jakson
+                 const periodWeek = weekNum % 2 === 0 ? weekNum : weekNum - 1;
                  const periodKey = `${monday.getFullYear()}-W${periodWeek}`;
                  
                  if (!periods[periodKey]) periods[periodKey] = [];
