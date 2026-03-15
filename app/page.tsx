@@ -210,11 +210,11 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="max-w-4xl mx-auto p-2 sm:p-6 lg:p-8">
       {/* Header */}
-      <header className="mb-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+      <header className="mb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700">
         <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">AKT Palkanlaskenta</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">AKT Palkanlaskenta</h1>
           <p className="text-slate-400 mt-1">Kuljetusalan TES-pohjainen laskuri</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
@@ -244,24 +244,24 @@ export default function Home() {
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {/* Tabs */}
-      <div className="flex space-x-2 mb-6">
+      <div className="flex space-x-1.5 sm:space-x-2 mb-6">
         <button 
           onClick={() => setActiveTab("calculator")}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 ${activeTab === "calculator" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
+          className={`flex-1 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1 sm:space-x-2 ${activeTab === "calculator" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
         >
           <Calculator size={18} />
           <span>Laskuri</span>
         </button>
         <button 
           onClick={() => setActiveTab("shifts")}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 ${activeTab === "shifts" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
+          className={`flex-1 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1 sm:space-x-2 ${activeTab === "shifts" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
         >
           <List size={18} />
           <span>Omat vuorot</span>
         </button>
         <button 
           onClick={() => setActiveTab("info")}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 ${activeTab === "info" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
+          className={`flex-1 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1 sm:space-x-2 ${activeTab === "info" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
         >
           <Info size={18} />
           <span>Ohjeet</span>
@@ -271,8 +271,8 @@ export default function Home() {
       {activeTab === "calculator" && (
         <div className="space-y-6">
           
-          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-            <h2 className="text-xl font-semibold mb-4 flex items-center space-x-2 text-slate-200">
+          <div className="bg-slate-800 rounded-2xl p-4 sm:p-6 border border-slate-700/50 shadow-xl">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center space-x-2 text-slate-200">
               <Settings className="text-blue-400" />
               <span>Asetukset (AUT 2025-2026)</span>
             </h2>
@@ -307,7 +307,7 @@ export default function Home() {
                 <label className="block text-sm font-medium text-slate-400 mb-1">Sunnuntai/vapaapäivätyölisä (%)</label>
                 <input type="number" value={sundayBonus} onChange={(e) => setSundayBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-slate-400 mb-1">Iltalisä (%)</label>
                   <input type="number" value={eveningBonus} onChange={(e) => setEveningBonus(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
@@ -321,7 +321,7 @@ export default function Home() {
           </div>
 
           {/* Shift Input Card */}
-          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+          <div className="bg-slate-800 rounded-2xl p-4 sm:p-6 border border-slate-700/50 shadow-xl">
             <h2 className="text-xl font-semibold mb-4 flex items-center space-x-2 text-slate-200">
               <Clock className="text-blue-400" />
               <span>Vuoron syöttö</span>
@@ -330,11 +330,11 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Vuoron alku</label>
-                <input type="datetime-local" value={startInput} onChange={(e) => setStartInput(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition [color-scheme:dark]" />
+                <input type="datetime-local" value={startInput} onChange={(e) => setStartInput(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition [color-scheme:dark] min-w-0 box-border" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Vuoron loppu</label>
-                <input type="datetime-local" value={endInput} onChange={(e) => setEndInput(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition [color-scheme:dark]" />
+                <input type="datetime-local" value={endInput} onChange={(e) => setEndInput(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition [color-scheme:dark] min-w-0 box-border" />
               </div>
             </div>
 
@@ -343,11 +343,11 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Tauko alkaa</label>
-                  <input type="time" value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark]" />
+                  <input type="time" value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
                 </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Tauko päättyy</label>
-                  <input type="time" value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark]" />
+                  <input type="time" value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
                 </div>
               </div>
             </div>
@@ -359,7 +359,7 @@ export default function Home() {
 
           {/* Results Card */}
           {result && (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-slate-600/30 shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-600/30 shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300">
               <h2 className="text-2xl font-bold mb-6 text-white border-b border-slate-700 pb-4">Laskelman tulos</h2>
               
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -418,9 +418,9 @@ export default function Home() {
                 
               </div>
 
-              <div className="flex justify-between items-center py-4 mt-4 bg-slate-900/80 rounded-xl px-5 border border-slate-700">
-                <span className="text-lg font-bold text-slate-200">Arvioitu palkka yhteensä</span>
-                <span className="text-2xl font-black text-emerald-400">{result.totalPay?.toFixed(2)} €</span>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 mt-4 bg-slate-900/80 rounded-xl px-4 sm:px-5 border border-slate-700 gap-2">
+                <span className="text-sm sm:text-lg font-bold text-slate-200 uppercase sm:normal-case tracking-wider sm:tracking-normal">Arvioitu palkka yhteensä</span>
+                <span className="text-xl sm:text-2xl font-black text-emerald-400">{result.totalPay?.toFixed(2)} €</span>
               </div>
               
               <div className="mt-6 flex gap-3">
@@ -441,9 +441,9 @@ export default function Home() {
 
       {activeTab === "shifts" && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+          <div className="bg-slate-800 rounded-2xl p-4 sm:p-6 border border-slate-700/50 shadow-xl">
              <div className="flex justify-between items-center mb-6">
-               <h2 className="text-xl font-semibold text-slate-200">Tallennetut vuorot ({savedShifts.length})</h2>
+               <h2 className="text-lg sm:text-xl font-semibold text-slate-200">Tallennetut vuorot ({savedShifts.length})</h2>
                <button onClick={fetchShifts} className="p-2 hover:bg-slate-700 rounded-lg transition text-slate-400">
                  <Clock size={20} />
                </button>

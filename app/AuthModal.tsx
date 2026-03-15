@@ -61,10 +61,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-6">
+        <div className="p-5 sm:p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              {isRegister ? <UserPlus className="text-blue-400" /> : <LogIn className="text-blue-400" />}
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              {isRegister ? <UserPlus className="text-blue-400" size={24} /> : <LogIn className="text-blue-400" size={24} />}
               <span>{isRegister ? "Luo tili" : "Kirjaudu sisään"}</span>
             </h2>
             <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
