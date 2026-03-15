@@ -1,3 +1,5 @@
+import { isPublicHoliday } from './holidays';
+
 export interface ShiftInput {
   startTime: Date;
   endTime: Date;
@@ -15,6 +17,7 @@ export interface CalculationResult {
   nightMinutes: number;
   sundayMinutes: number;
   saturdayMinutes: number;
+  holidayMinutes: number;
   
   // Euro amounts based on AKT percentages
   normalPay?: number;
@@ -24,6 +27,7 @@ export interface CalculationResult {
   nightPay?: number;         // 20%
   sundayPay?: number;        // 100%
   saturdayPay?: number;      // 10% (15:00 - 18:00)
+  holidayPay?: number;       // 100% (arkipyhät)
   totalPay?: number;
 }
 
@@ -36,6 +40,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   let nightMinutes = 0;
   let sundayMinutes = 0;
   let saturdayMinutes = 0;
+  let holidayMinutes = 0;
 
   // We iterate minute by minute
   for (let m = new Date(startTime); m < endTime; m.setMinutes(m.getMinutes() + 1)) {
@@ -54,6 +59,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
       paidMinutes++;
       const hours = m.getHours();
       const day = m.getDay(); // 0 is Sunday, 6 is Saturday
+      const holiday = isPublicHoliday(m);
 
       // Evening time (18:00 - 22:00)
       if (hours >= 18 && hours < 22) {
@@ -66,14 +72,19 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
       }
       
       // Saturday bonus (15:00 - 18:00)
-      // Only paid on Saturdays (day 6) and if not some other bonus? 
       // PDF line 125: "arkilauantaina klo 15.00-18.00"
       if (day === 6 && hours >= 15 && hours < 18) {
         saturdayMinutes++;
       }
       
-      // Sunday time
-      if (day === 0) {
+      // Sunday OR public holiday → 100% lisä
+      // Ei tuplalaskentaa: jos on sunnuntai JA pyhäpäivä, lasketaan vain kerran
+      if (day === 0 && !holiday) {
+        sundayMinutes++;
+      } else if (holiday && day !== 0) {
+        holidayMinutes++;
+      } else if (day === 0 && holiday) {
+        // Sunnuntai + pyhäpäivä → lasketaan sunnuntailisänä (sama 100%)
         sundayMinutes++;
       }
     }
@@ -94,9 +105,10 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   const eveningPay = eveningMinutes * basePerMin * 0.15;
   const nightPay = nightMinutes * basePerMin * 0.20;
   const sundayPay = sundayMinutes * basePerMin * 1.0;
-  const saturdayPay = saturdayMinutes * basePerMin * 0.10; // Saturday 15:00-18:00
+  const saturdayPay = saturdayMinutes * basePerMin * 0.10;
+  const holidayPay = holidayMinutes * basePerMin * 1.0;  // Sama 100% kuin sunnuntai
   
-  const totalPay = normalPay + overtime50Pay + overtime100Pay + eveningPay + nightPay + sundayPay + saturdayPay;
+  const totalPay = normalPay + overtime50Pay + overtime100Pay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
 
   return {
     totalMinutes,
@@ -108,6 +120,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     nightMinutes,
     sundayMinutes,
     saturdayMinutes,
+    holidayMinutes,
     normalPay,
     overtime50Pay,
     overtime100Pay,
@@ -115,6 +128,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     nightPay,
     sundayPay,
     saturdayPay,
+    holidayPay,
     totalPay
   };
 }

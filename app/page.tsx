@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { calculateSalary, CalculationResult } from "../utils/calculator";
-import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2 } from "lucide-react";
+import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar } from "lucide-react";
+import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
 import AuthModal from "./AuthModal";
 
@@ -414,6 +415,13 @@ export default function Home() {
                     <span className="font-medium text-teal-300">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
                 )}
+
+                {result.holidayMinutes > 0 && (
+                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
+                    <span className="text-slate-300">Arkipyhälisä (100%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.holidayMinutes)})</span></span>
+                    <span className="font-medium text-red-300">{result.holidayPay?.toFixed(2)} €</span>
+                  </div>
+                )}
                 
               </div>
 
@@ -453,31 +461,95 @@ export default function Home() {
                  <p className="text-slate-500 italic mb-4">Ei vielä tallennettuja vuoroja.</p>
                  <button onClick={() => setActiveTab("calculator")} className="text-blue-400 hover:underline">Lisää ensimmäinen vuoro tästä</button>
                </div>
-             ) : (
-               <div className="space-y-4">
-                 {savedShifts.map((shift) => (
-                   <div key={shift.id} className="bg-slate-900/50 border border-slate-700 p-4 rounded-xl flex justify-between items-center group hover:border-slate-500 transition shadow-sm">
-                     <div className="space-y-1">
-                       <div className="text-white font-semibold">
-                         {format(new Date(shift.date), "dd.MM.yyyy")}
+             ) : (() => {
+               // Ryhmittele vuorot 2 viikon jaksoihin
+               const sorted = [...savedShifts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+               const periods: Record<string, typeof savedShifts> = {};
+               
+               sorted.forEach((shift) => {
+                 const d = new Date(shift.date);
+                 // Laske jakson alku: parillinen viikko alkaa maanantaista
+                 const dayOfWeek = d.getDay() || 7; // Ma=1...Su=7
+                 const monday = new Date(d);
+                 monday.setDate(d.getDate() - (dayOfWeek - 1));
+                 // Laske viikon numero
+                 const startOfYear = new Date(monday.getFullYear(), 0, 1);
+                 const weekNum = Math.ceil(((monday.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+                 // Parillinen viikko = jakson alku, pariton = edellinen viikko on alku
+                 const periodWeek = weekNum % 2 === 1 ? weekNum : weekNum - 1;
+                 const periodKey = `${monday.getFullYear()}-W${periodWeek}`;
+                 
+                 if (!periods[periodKey]) periods[periodKey] = [];
+                 periods[periodKey].push(shift);
+               });
+
+               return (
+                 <div className="space-y-6">
+                   {Object.entries(periods).map(([periodKey, shifts]) => {
+                     const periodShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                     const firstDate = new Date(periodShifts[0].date);
+                     const lastDate = new Date(periodShifts[periodShifts.length - 1].date);
+                     const totalPay = periodShifts.reduce((sum, s) => sum + (Number(s.total_pay) || 0), 0);
+                     const totalMinutes = periodShifts.reduce((sum, s) => sum + (Number(s.paid_minutes) || 0), 0);
+                     const holidayShifts = periodShifts.filter(s => isPublicHoliday(new Date(s.date)));
+
+                     return (
+                       <div key={periodKey} className="space-y-3">
+                         {/* Jakson otsikko */}
+                         <div className="flex items-center justify-between bg-slate-900/80 rounded-xl p-4 border border-slate-600/30">
+                           <div className="flex items-center gap-3">
+                             <Calendar className="text-blue-400" size={20} />
+                             <div>
+                               <div className="text-white font-semibold">
+                                 {format(firstDate, "dd.MM.")} — {format(lastDate, "dd.MM.yyyy")}
+                               </div>
+                               <div className="text-xs text-slate-400">
+                                 {periodShifts.length} vuoroa · {Math.floor(totalMinutes / 60)} h {totalMinutes % 60} min
+                                 {holidayShifts.length > 0 && <span className="text-red-300 ml-2">🔴 {holidayShifts.length} pyhäpäivä</span>}
+                               </div>
+                             </div>
+                           </div>
+                           <div className="text-right">
+                             <div className="text-emerald-400 font-black text-xl">{totalPay.toFixed(2)} €</div>
+                             <div className="text-xs text-slate-500">jakson palkka</div>
+                           </div>
+                         </div>
+                         
+                         {/* Jakson vuorot */}
+                         <div className="space-y-2 ml-2">
+                           {periodShifts.map((shift) => {
+                             const shiftDate = new Date(shift.date);
+                             const isHoliday = isPublicHoliday(shiftDate);
+                             return (
+                               <div key={shift.id} className={`bg-slate-900/50 border p-4 rounded-xl flex justify-between items-center group hover:border-slate-500 transition shadow-sm ${isHoliday ? 'border-red-800/50' : 'border-slate-700'}`}>
+                                 <div className="space-y-1">
+                                   <div className="text-white font-semibold flex items-center gap-2">
+                                     {format(shiftDate, "dd.MM.yyyy (EEEE)")}
+                                     {isHoliday && <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded-full">Pyhäpäivä</span>}
+                                   </div>
+                                   <div className="text-sm text-slate-400">
+                                     {format(new Date(shift.start_input), "HH:mm")} - {format(new Date(shift.end_input), "HH:mm")}
+                                   </div>
+                                   <div className="text-emerald-400 font-bold text-lg">
+                                     {(Number(shift.total_pay) || 0).toFixed(2)} €
+                                   </div>
+                                 </div>
+                                 <button 
+                                  onClick={() => handleDeleteShift(shift.id)}
+                                  className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition opacity-0 group-hover:opacity-100"
+                                 >
+                                   <Trash2 size={18} />
+                                 </button>
+                               </div>
+                             );
+                           })}
+                         </div>
                        </div>
-                       <div className="text-sm text-slate-400">
-                         {format(new Date(shift.start_input), "HH:mm")} - {format(new Date(shift.end_input), "HH:mm")}
-                       </div>
-                       <div className="text-emerald-400 font-bold text-lg">
-                         {(Number(shift.total_pay) || 0).toFixed(2)} €
-                       </div>
-                     </div>
-                     <button 
-                      onClick={() => handleDeleteShift(shift.id)}
-                      className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition opacity-0 group-hover:opacity-100"
-                     >
-                       <Trash2 size={18} />
-                     </button>
-                   </div>
-                 ))}
-               </div>
-             )}
+                     );
+                   })}
+                 </div>
+               );
+             })()}
           </div>
         </div>
       )}
