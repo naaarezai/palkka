@@ -50,8 +50,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (error) throw error;
         onClose();
       }
-    } catch (err: any) {
-      setError(err.message || "Tapahtui virhe");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Tapahtui virhe";
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function AuthCodeError() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 text-center">
@@ -7,13 +9,14 @@ export default function AuthCodeError() {
           Vaikuttaa siltä, että kirjautumislinkki on vanhentunut tai se on jo käytetty. 
           Kokeile kirjautua uudelleen sähköpostilla ja salasanalla etusivulta.
         </p>
-        <a 
+        <Link 
           href="/" 
           className="inline-block bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition"
         >
           Palaa Etusivulle
-        </a>
+        </Link>
       </div>
     </div>
   );
 }
+

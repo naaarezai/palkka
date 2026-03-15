@@ -10,7 +10,8 @@ import AuthModal from "./AuthModal";
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"calculator" | "shifts">("calculator");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [session, setSession] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [session, setSession] = useState<Record<string, any> | null>(null);
   
   // Settings
   const [baseWage, setBaseWage] = useState("16.50");
@@ -36,10 +37,10 @@ export default function Home() {
   const [endInput, setEndInput] = useState("");
   const [breakStart, setBreakStart] = useState("");
   const [breakEnd, setBreakEnd] = useState("");
-  const [isLoadingShifts, setIsLoadingShifts] = useState(false);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
-  const [savedShifts, setSavedShifts] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [savedShifts, setSavedShifts] = useState<Record<string, any>[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -123,8 +124,9 @@ export default function Home() {
       alert("Vuoro tallennettu onnistuneesti!");
       fetchShifts();
       setActiveTab("shifts");
-    } catch (err: any) {
-      alert("Virhe tallennuksessa: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Tuntematon virhe";
+      alert("Virhe tallennuksessa: " + message);
     } finally {
       setIsSaving(false);
     }
