@@ -492,27 +492,54 @@ export default function Home() {
                      const totalPay = periodShifts.reduce((sum, s) => sum + (Number(s.total_pay) || 0), 0);
                      const totalMinutes = periodShifts.reduce((sum, s) => sum + (Number(s.paid_minutes) || 0), 0);
                      const holidayShifts = periodShifts.filter(s => isPublicHoliday(new Date(s.date)));
+                     
+                     // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
+                     const totalHours = totalMinutes / 60;
+                     const sumDaily50 = periodShifts.reduce((sum, s) => sum + (Number(s.overtime50_minutes) || 0), 0) / 60;
+                     const sumDaily100 = periodShifts.reduce((sum, s) => sum + (Number(s.overtime100_minutes) || 0), 0) / 60;
+                     
+                     // Jakson ylityörajat: 80h asti normaali, 80-92h 50%, yli 92h 100%
+                     const periodOvertime50 = Math.max(0, Math.min(totalHours, 92) - 80);
+                     const periodOvertime100 = Math.max(0, totalHours - 92);
+                     
+                     // TES: Maksetaan suuremman mukaan (vuorokautinen vs jakson ylityö)
+                     const extra50 = Math.max(0, periodOvertime50 - sumDaily50);
+                     const extra100 = Math.max(0, periodOvertime100 - sumDaily100);
+                     const extraPay = (extra50 * (parseFloat(baseWage) * 0.5)) + (extra100 * (parseFloat(baseWage) * 1.0));
 
                      return (
                        <div key={periodKey} className="space-y-3">
                          {/* Jakson otsikko */}
-                         <div className="flex items-center justify-between bg-slate-900/80 rounded-xl p-4 border border-slate-600/30">
-                           <div className="flex items-center gap-3">
-                             <Calendar className="text-blue-400" size={20} />
-                             <div>
-                               <div className="text-white font-semibold">
-                                 {format(firstDate, "dd.MM.")} — {format(lastDate, "dd.MM.yyyy")}
-                               </div>
-                               <div className="text-xs text-slate-400">
-                                 {periodShifts.length} vuoroa · {Math.floor(totalMinutes / 60)} h {totalMinutes % 60} min
-                                 {holidayShifts.length > 0 && <span className="text-red-300 ml-2">🔴 {holidayShifts.length} pyhäpäivä</span>}
+                         <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-600/30">
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center gap-3">
+                               <Calendar className="text-blue-400" size={20} />
+                               <div>
+                                 <div className="text-white font-semibold">
+                                   {format(firstDate, "dd.MM.")} — {format(lastDate, "dd.MM.yyyy")}
+                                 </div>
+                                 <div className="text-xs text-slate-400">
+                                   {periodShifts.length} vuoroa · {Math.floor(totalHours)} h {totalMinutes % 60} min
+                                   {holidayShifts.length > 0 && <span className="text-red-300 ml-2">🔴 {holidayShifts.length} pyhäpäivä</span>}
+                                 </div>
                                </div>
                              </div>
+                             <div className="text-right">
+                               <div className="text-emerald-400 font-black text-xl">{(totalPay + extraPay).toFixed(2)} €</div>
+                               <div className="text-xs text-slate-500">jakson arvioitu palkka</div>
+                             </div>
                            </div>
-                           <div className="text-right">
-                             <div className="text-emerald-400 font-black text-xl">{totalPay.toFixed(2)} €</div>
-                             <div className="text-xs text-slate-500">jakson palkka</div>
-                           </div>
+                           
+                           {/* Jaksotyöylityö-ilmoitus */}
+                           {(extra50 > 0 || extra100 > 0) && (
+                             <div className="mt-2 py-2 px-3 bg-amber-950/20 border border-amber-900/30 rounded-lg flex items-center justify-between text-xs">
+                               <span className="text-amber-200 flex items-center gap-2">
+                                 <Settings size={14} />
+                                 Jakson ylityölisä (80h ylitys): {extra50 > 0 && `${extra50.toFixed(1)}h (50%)`} {extra100 > 0 && `${extra100.toFixed(1)}h (100%)`}
+                               </span>
+                               <span className="text-amber-300 font-bold">+ {extraPay.toFixed(2)} €</span>
+                             </div>
+                           )}
                          </div>
                          
                          {/* Jakson vuorot */}
