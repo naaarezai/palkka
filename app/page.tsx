@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { calculateSalary, CalculationResult } from "../utils/calculator";
-import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar } from "lucide-react";
+import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History } from "lucide-react";
 import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
 import AuthModal from "./AuthModal";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"calculator" | "shifts">("calculator");
+  const [activeTab, setActiveTab] = useState<"calculator" | "shifts" | "info">("calculator");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [session, setSession] = useState<Record<string, any> | null>(null);
@@ -258,6 +258,13 @@ export default function Home() {
         >
           <List size={18} />
           <span>Omat vuorot</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab("info")}
+          className={`flex-1 py-3 px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 ${activeTab === "info" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
+        >
+          <Info size={18} />
+          <span>Ohjeet</span>
         </button>
       </div>
 
@@ -558,7 +565,68 @@ export default function Home() {
                    })}
                  </div>
                );
-             })()}
+              })()}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "info" && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+               <BookOpen className="text-blue-400" />
+               <span>AKT Palkanlaskuri - Käyttöohje</span>
+             </h2>
+
+             <div className="space-y-8 text-slate-300">
+               <section>
+                 <h3 className="text-lg font-semibold text-blue-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Settings size={18} /> 1. Perusasetukset
+                 </h3>
+                 <p className="text-sm leading-relaxed">
+                   Ennen vuorojen syöttämistä, varmista että asetukset ovat oikein. Valitse <strong>Palveluvuodet</strong> TES-taulukosta, jolloin perustuntipalkka päivittyy automaattisesti. Muista valita <strong>HSL-ajot</strong>, jos ajat Helsingin seudun liikenteen sopimusajoja.
+                 </p>
+               </section>
+
+               <section>
+                 <h3 className="text-lg font-semibold text-emerald-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <ShieldCheck size={18} /> 2. Arkipyhät (100% lisä)
+                 </h3>
+                 <p className="text-sm leading-relaxed">
+                   Sovellus tunnistaa automaattisesti Suomen viralliset arkipyhät (esim. joulu, juhannus, pääsiäinen). Arkipyhänä tehty työ oikeuttaa <strong>100% lisään</strong>. Sovellus estää automaattisesti &quot;tuplabonukset&quot;, jos pyhä sattuu sunnuntaille.
+                 </p>
+               </section>
+
+               <section>
+                 <h3 className="text-lg font-semibold text-amber-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Scale size={18} /> 3. Jaksotyö (80h sääntö)
+                 </h3>
+                 <div className="bg-slate-900/50 p-4 rounded-xl border border-amber-900/20 text-sm">
+                    <p className="mb-2 font-medium text-amber-200">AKT Jaksotyön periaate:</p>
+                    <ul className="list-disc ml-5 space-y-1 text-slate-400">
+                      <li>Tunnit tasaantuvat 14 vrk jakson sisällä.</li>
+                      <li>Päivittäistä ylityötä (esim. 8h ylitys) ei makseta erikseen.</li>
+                      <li>Ylityökorvaukset alkavat vasta kun <strong>80 tuntia</strong> ylittyy jakson aikana.</li>
+                      <li>80-92h = +50% | yli 92h = +100%</li>
+                    </ul>
+                 </div>
+               </section>
+
+               <section>
+                 <h3 className="text-lg font-semibold text-purple-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <History size={18} /> 4. Palkkajaksot
+                 </h3>
+                 <p className="text-sm leading-relaxed">
+                   Sovellus jakaa vuorot 14 vuorokauden jaksoihin, jotka alkavat <strong>parillisista viikoista</strong> (esim. viikko 8, 10, 12...). Voit tarkastella jakson kokonaissaldoa &quot;Omat vuorot&quot; -välilehdeltä.
+                 </p>
+               </section>
+             </div>
+
+             <div className="mt-8 pt-6 border-t border-slate-700 text-center">
+               <p className="text-xs text-slate-500 italic">
+                 Tämä laskuri on suuntaa-antava apuväline. Tarkista lopullinen palkkasi virallisesta palkkalaskelmasta.
+               </p>
+             </div>
           </div>
         </div>
       )}
