@@ -258,7 +258,7 @@ export default function Home() {
       return;
     }
 
-    const breaks = [];
+    const breaks: { start: Date; end: Date }[] = [];
     
     const parseBreak = (bStartStr: string, bEndStr: string) => {
       if (!bStartStr || !bEndStr) return null;
@@ -664,7 +664,7 @@ export default function Home() {
                                       const analyzedPeriodShifts = periodShifts.map(shift => {
                         const sTime = new Date(shift.start_input);
                         const eTime = new Date(shift.end_input);
-                        const bList = [];
+                        const bList: { start: Date; end: Date }[] = [];
                         
                         // Parse multiple breaks from pipe-separated strings
                         if (shift.break_start_str && shift.break_end_str) {
