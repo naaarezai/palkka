@@ -6,6 +6,7 @@ import { calculateSalary, CalculationResult } from "../utils/calculator";
 import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History } from "lucide-react";
 import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
+import { Session } from "@supabase/supabase-js";
 import AuthModal from "./AuthModal";
 
 interface Shift {
@@ -17,7 +18,7 @@ interface Shift {
   break_end_str?: string;
   base_wage?: string;
   user_id: string;
-  [key: string]: any; // Allow for extra DB fields if needed, but we'll try to avoid 'any' in logic
+  [key: string]: unknown; // Allow for extra DB fields if needed
 }
 
 interface AnalyzedShift extends Shift {
@@ -27,8 +28,7 @@ interface AnalyzedShift extends Shift {
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"calculator" | "shifts" | "info">("calculator");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [session, setSession] = useState<Record<string, any> | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   
   // Settings
   const [userName, setUserName] = useState("");
