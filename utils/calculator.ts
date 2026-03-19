@@ -5,6 +5,7 @@ export interface ShiftInput {
   endTime: Date;
   breaks: { start: Date; end: Date }[];
   baseWage?: number;
+  ktaWage?: number;
 }
 
 export interface CalculationResult {
@@ -34,7 +35,8 @@ export interface CalculationResult {
 }
 
 export function calculateSalary(input: ShiftInput): CalculationResult {
-  const { startTime, endTime, breaks, baseWage = 16.50 } = input;
+  const { startTime, endTime, breaks, baseWage = 16.50, ktaWage } = input;
+  const effectiveKta = ktaWage || baseWage;
   
   let totalMinutes = 0;
   let paidMinutes = 0;
@@ -103,14 +105,15 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
 
   // Pay calculation
   const basePerMin = baseWage / 60;
+  const ktaPerMin = effectiveKta / 60;
   const normalPay = paidMinutes * basePerMin;
   const waitingPay = waitingMinutes * basePerMin;
   
-  const eveningPay = eveningMinutes * basePerMin * 0.15;
-  const nightPay = nightMinutes * basePerMin * 0.20;
-  const sundayPay = sundayMinutes * basePerMin * 1.0;
-  const saturdayPay = saturdayMinutes * basePerMin * 0.10;
-  const holidayPay = holidayMinutes * basePerMin * 1.0;
+  const eveningPay = eveningMinutes * ktaPerMin * 0.15;
+  const nightPay = nightMinutes * ktaPerMin * 0.20;
+  const sundayPay = sundayMinutes * ktaPerMin * 1.0;
+  const saturdayPay = saturdayMinutes * ktaPerMin * 0.10;
+  const holidayPay = holidayMinutes * ktaPerMin * 1.0;
   
   const totalPay = normalPay + waitingPay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
 

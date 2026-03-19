@@ -33,6 +33,7 @@ export default function Home() {
   // Settings
   const [userName, setUserName] = useState("");
   const [baseWage, setBaseWage] = useState("16.50");
+  const [ktaWage, setKtaWage] = useState("");
   const [experience, setExperience] = useState("default");
   const [eveningBonus, setEveningBonus] = useState("15");
   const [nightBonus, setNightBonus] = useState("20");
@@ -65,6 +66,7 @@ export default function Home() {
     // Load local settings on mount
     const savedWage = localStorage.getItem("base-wage") || "16.50";
     setBaseWage(savedWage);
+    setKtaWage(localStorage.getItem("kta-wage") || "");
     setUserName(localStorage.getItem("user-name") || "");
     setExperience(localStorage.getItem("experience") || "default");
     setEveningBonus(localStorage.getItem("evening-bonus") || "15");
@@ -148,7 +150,8 @@ export default function Home() {
         break_end_str: allBreakEnds,
         total_minutes: result.totalMinutes,
         paid_minutes: result.paidMinutes,
-        waiting_minutes: result.waitingMinutes,
+        ktaWage: ktaWage ? parseFloat(ktaWage) : undefined,
+      waiting_minutes: result.waitingMinutes,
         waiting_pay: result.waitingPay,
         normal_minutes: result.normalMinutes,
         normal_pay: result.normalPay,
@@ -227,9 +230,11 @@ export default function Home() {
     }
   };
 
-  const saveSettings = async (newWage?: string, newExp?: string, newName?: string) => {
+  const saveSettings = async (newWage?: string, newExp?: string, newName?: string, newKta?: string) => {
     const finalName = newName !== undefined ? newName : userName;
+    const finalKta = newKta !== undefined ? newKta : ktaWage;
     localStorage.setItem("base-wage", newWage || baseWage);
+    localStorage.setItem("kta-wage", finalKta);
     localStorage.setItem("user-name", finalName);
     localStorage.setItem("experience", newExp || experience);
     localStorage.setItem("evening-bonus", eveningBonus);
@@ -303,7 +308,8 @@ export default function Home() {
       startTime,
       endTime,
       breaks,
-      baseWage: parseFloat(baseWage) || 0
+      baseWage: parseFloat(baseWage) || 0,
+      ktaWage: ktaWage ? parseFloat(ktaWage) : undefined
     });
 
     setResult(calcObj);
@@ -420,7 +426,11 @@ export default function Home() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Perustuntipalkka (€/h)</label>
-                <input type="number" step="0.01" value={baseWage} onChange={(e) => { setBaseWage(e.target.value); setExperience("default"); }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                <input type="number" step="0.01" value={baseWage} onChange={(e) => { setBaseWage(e.target.value); setExperience("default"); saveSettings(e.target.value); }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">KTA (€/h) <span className="text-[10px] text-slate-500 font-normal">(Lisiä varten)</span></label>
+                <input type="number" step="0.01" value={ktaWage} onChange={(e) => { setKtaWage(e.target.value); saveSettings(undefined, undefined, undefined, e.target.value); }} placeholder={baseWage} className="w-full bg-blue-900/20 border border-blue-800/50 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Sunnuntai/vapaapäivätyölisä (%)</label>
@@ -570,7 +580,7 @@ export default function Home() {
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30020 Iltavuorolisä ({eveningBonus}%)</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.eveningMinutes / 60).toFixed(2)}</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(eveningBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-indigo-300 text-xs sm:text-sm">{result.eveningPay?.toFixed(2)} €</span>
                   </div>
                 )}
@@ -579,7 +589,7 @@ export default function Home() {
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30030 Yövuorolisä ({nightBonus}%)</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.nightMinutes / 60).toFixed(2)}</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(nightBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-purple-300 text-xs sm:text-sm">{result.nightPay?.toFixed(2)} €</span>
                   </div>
                 )}
@@ -588,7 +598,7 @@ export default function Home() {
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">20110 Sunnuntaitunnit ({sundayBonus}%)</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.sundayMinutes / 60).toFixed(2)}</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(sundayBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-pink-300 text-xs sm:text-sm">{result.sundayPay?.toFixed(2)} €</span>
                   </div>
                 )}
@@ -597,7 +607,7 @@ export default function Home() {
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30060 Lauantailisä (10%)</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.saturdayMinutes / 60).toFixed(2)}</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * 0.10).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
                     <span className="text-right font-medium text-teal-300 text-xs sm:text-sm">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
                 )}
@@ -606,7 +616,7 @@ export default function Home() {
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">Arkipyhälisä (100%)</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.holidayMinutes / 60).toFixed(2)}</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
                     <span className="text-right font-medium text-red-300 text-xs sm:text-sm">{result.holidayPay?.toFixed(2)} €</span>
                   </div>
                 )}
@@ -714,7 +724,8 @@ export default function Home() {
                             startTime: sTime,
                             endTime: eTime,
                             breaks: bList,
-                            baseWage: Number(shift.base_wage) || parseFloat(baseWage)
+                            baseWage: Number(shift.base_wage) || parseFloat(baseWage),
+                            ktaWage: ktaWage ? parseFloat(ktaWage) : (Number(shift.kta_wage) || undefined)
                           })
                         };
                       });
@@ -749,7 +760,8 @@ export default function Home() {
                      const periodOvertime100 = Math.max(0, totalHours - 92);
                      
                      // Lasketaan ylityölisän arvo (50% ja 100% lisäosan osuus)
-                     const periodOvertimePay = (periodOvertime50 * (parseFloat(baseWage) * 0.5)) + (periodOvertime100 * (parseFloat(baseWage) * 1.0));
+                     const ktaForOt = parseFloat(ktaWage) || parseFloat(baseWage);
+                     const periodOvertimePay = (periodOvertime50 * (ktaForOt * 0.5)) + (periodOvertime100 * (ktaForOt * 1.0));
 
                      const lastDate = new Date(periodShifts[periodShifts.length - 1].date);
 
