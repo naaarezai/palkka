@@ -8,6 +8,22 @@ import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
 import AuthModal from "./AuthModal";
 
+interface Shift {
+  id: string;
+  date: string;
+  start_input: string;
+  end_input: string;
+  break_start_str?: string;
+  break_end_str?: string;
+  base_wage?: string;
+  user_id: string;
+  [key: string]: any; // Allow for extra DB fields if needed, but we'll try to avoid 'any' in logic
+}
+
+interface AnalyzedShift extends Shift {
+  calc: CalculationResult;
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"calculator" | "shifts" | "info">("calculator");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -42,8 +58,7 @@ export default function Home() {
   const [extraBreaks, setExtraBreaks] = useState<{start: string, end: string}[]>([]);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [savedShifts, setSavedShifts] = useState<Record<string, any>[]>([]);
+  const [savedShifts, setSavedShifts] = useState<Shift[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -636,7 +651,7 @@ export default function Home() {
                </div>
              ) : (() => {
                // Ryhmittele vuorot 2 viikon jaksoihin
-               const sorted = [...savedShifts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+               const sorted = [...savedShifts].sort((a: Shift, b: Shift) => new Date(a.date).getTime() - new Date(b.date).getTime());
                const periods: Record<string, typeof savedShifts> = {};
                
                sorted.forEach((shift) => {
@@ -659,7 +674,7 @@ export default function Home() {
                return (
                  <div className="space-y-6">
                    {Object.entries(periods).map(([periodKey, shifts]) => {
-                     const periodShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                     const periodShifts = shifts.sort((a: Shift, b: Shift) => new Date(a.date).getTime() - new Date(b.date).getTime());
                      const firstDate = new Date(periodShifts[0].date);
                                       const analyzedPeriodShifts = periodShifts.map(shift => {
                         const sTime = new Date(shift.start_input);
@@ -704,27 +719,27 @@ export default function Home() {
                         };
                       });
 
-                      const totalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.totalPay || 0), 0);
-                      const totalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
+                      const totalPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.totalPay || 0), 0);
+                      const totalMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.paidMinutes, 0);
                       
                       // Breakdown for period
-                      const periodNormalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.normalPay || 0), 0);
-                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.waitingPay || 0), 0);
-                      const periodEveningPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.eveningPay || 0), 0);
-                      const periodNightPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.nightPay || 0), 0);
-                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.saturdayPay || 0), 0);
-                      const periodSundayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.sundayPay || 0), 0);
-                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.holidayPay || 0), 0);
+                      const periodNormalPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.normalPay || 0), 0);
+                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.waitingPay || 0), 0);
+                      const periodEveningPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.eveningPay || 0), 0);
+                      const periodNightPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.nightPay || 0), 0);
+                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.saturdayPay || 0), 0);
+                      const periodSundayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.sundayPay || 0), 0);
+                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.holidayPay || 0), 0);
 
-                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
-                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.waitingMinutes, 0);
-                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.eveningMinutes, 0);
-                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.nightMinutes, 0);
-                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.saturdayMinutes, 0);
-                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.sundayMinutes, 0);
-                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.holidayMinutes, 0);
+                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.paidMinutes, 0);
+                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.waitingMinutes, 0);
+                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.eveningMinutes, 0);
+                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.nightMinutes, 0);
+                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.saturdayMinutes, 0);
+                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.sundayMinutes, 0);
+                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.holidayMinutes, 0);
 
-                      const holidayShifts = analyzedPeriodShifts.filter((s: any) => isPublicHoliday(new Date(s.date)));
+                      const holidayShifts = analyzedPeriodShifts.filter((s: AnalyzedShift) => isPublicHoliday(new Date(s.date)));
                      
                      // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
                      const totalHours = totalMinutes / 60;
