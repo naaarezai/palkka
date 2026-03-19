@@ -684,7 +684,7 @@ export default function Home() {
                             return { start: bStart, end: bEnd };
                           };
                           
-                          starts.forEach((s, i) => {
+                          starts.forEach((s: string, i: number) => {
                             const b = parseB(s, ends[i]);
                             if (b) bList.push(b);
                           });
@@ -704,27 +704,27 @@ export default function Home() {
                         };
                       });
 
-                      const totalPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.totalPay || 0), 0);
-                      const totalMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.paidMinutes, 0);
+                      const totalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.totalPay || 0), 0);
+                      const totalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
                       
                       // Breakdown for period
-                      const periodNormalPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.normalPay || 0), 0);
-                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.waitingPay || 0), 0);
-                      const periodEveningPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.eveningPay || 0), 0);
-                      const periodNightPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.nightPay || 0), 0);
-                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.saturdayPay || 0), 0);
-                      const periodSundayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.sundayPay || 0), 0);
-                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.holidayPay || 0), 0);
+                      const periodNormalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.normalPay || 0), 0);
+                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.waitingPay || 0), 0);
+                      const periodEveningPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.eveningPay || 0), 0);
+                      const periodNightPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.nightPay || 0), 0);
+                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.saturdayPay || 0), 0);
+                      const periodSundayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.sundayPay || 0), 0);
+                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.holidayPay || 0), 0);
 
-                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.paidMinutes, 0);
-                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.waitingMinutes, 0);
-                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.eveningMinutes, 0);
-                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.nightMinutes, 0);
-                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.saturdayMinutes, 0);
-                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.sundayMinutes, 0);
-                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.holidayMinutes, 0);
+                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
+                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.waitingMinutes, 0);
+                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.eveningMinutes, 0);
+                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.nightMinutes, 0);
+                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.saturdayMinutes, 0);
+                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.sundayMinutes, 0);
+                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.holidayMinutes, 0);
 
-                      const holidayShifts = analyzedPeriodShifts.filter(s => isPublicHoliday(new Date(s.date)));
+                      const holidayShifts = analyzedPeriodShifts.filter((s: any) => isPublicHoliday(new Date(s.date)));
                      
                      // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
                      const totalHours = totalMinutes / 60;
