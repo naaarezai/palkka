@@ -15,6 +15,7 @@ export default function Home() {
   const [session, setSession] = useState<Record<string, any> | null>(null);
   
   // Settings
+  const [userName, setUserName] = useState("");
   const [baseWage, setBaseWage] = useState("16.50");
   const [experience, setExperience] = useState("default");
   const [eveningBonus, setEveningBonus] = useState("15");
@@ -38,6 +39,7 @@ export default function Home() {
   const [endInput, setEndInput] = useState("");
   const [breakStart, setBreakStart] = useState("");
   const [breakEnd, setBreakEnd] = useState("");
+  const [extraBreaks, setExtraBreaks] = useState<{start: string, end: string}[]>([]);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +50,7 @@ export default function Home() {
     // Load local settings on mount
     const savedWage = localStorage.getItem("base-wage") || "16.50";
     setBaseWage(savedWage);
+    setUserName(localStorage.getItem("user-name") || "");
     setExperience(localStorage.getItem("experience") || "default");
     setEveningBonus(localStorage.getItem("evening-bonus") || "15");
     setNightBonus(localStorage.getItem("night-bonus") || "20");
@@ -57,17 +60,43 @@ export default function Home() {
     if (supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
-        if (session) fetchShifts();
+        if (session) {
+          fetchShifts();
+          fetchProfile(session.user.id);
+        }
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         setSession(session);
-        if (session) fetchShifts();
+        if (session) {
+          fetchShifts();
+          fetchProfile(session.user.id);
+        }
       });
 
       return () => subscription.unsubscribe();
     }
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .single();
+      
+      if (data && data.full_name) {
+        setUserName(data.full_name);
+        localStorage.setItem("user-name", data.full_name);
+      } else if (error) {
+        console.warn("Profile not found or error:", error.message);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  };
 
   const fetchShifts = async () => {
     if (!supabase) return;
@@ -92,15 +121,20 @@ export default function Home() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("shifts").insert({
+      const allBreakStarts = [breakStart, ...extraBreaks.map(eb => eb.start)].filter(Boolean).join("|");
+      const allBreakEnds = [breakEnd, ...extraBreaks.map(eb => eb.end)].filter(Boolean).join("|");
+
+      let { error } = await supabase.from("shifts").insert({
         user_id: session.user.id,
         date: new Date(startInput).toISOString(),
         start_input: startInput,
         end_input: endInput,
-        break_start_str: breakStart,
-        break_end_str: breakEnd,
+        break_start_str: allBreakStarts,
+        break_end_str: allBreakEnds,
         total_minutes: result.totalMinutes,
         paid_minutes: result.paidMinutes,
+        waiting_minutes: result.waitingMinutes,
+        waiting_pay: result.waitingPay,
         normal_minutes: result.normalMinutes,
         normal_pay: result.normalPay,
         overtime50_minutes: result.overtime50Minutes,
@@ -119,6 +153,39 @@ export default function Home() {
         experience_level: experience,
         base_wage: parseFloat(baseWage)
       });
+
+      // Jos virhe johtuu puuttuvista sarakkeista, yritä uudelleen ilman niitä
+      if (error && (error.message.includes("waiting_minutes") || error.message.includes("waiting_pay"))) {
+        console.warn("Missing waiting columns, retrying without them...");
+        const { error: retryError } = await supabase.from("shifts").insert({
+          user_id: session.user.id,
+          date: new Date(startInput).toISOString(),
+          start_input: startInput,
+          end_input: endInput,
+          break_start_str: allBreakStarts,
+          break_end_str: allBreakEnds,
+          total_minutes: result.totalMinutes,
+          paid_minutes: result.paidMinutes,
+          normal_minutes: result.normalMinutes,
+          normal_pay: result.normalPay,
+          overtime50_minutes: result.overtime50Minutes,
+          ot50_pay: result.overtime50Pay,
+          overtime100_minutes: result.overtime100Minutes,
+          ot100_pay: result.overtime100Pay,
+          evening_minutes: result.eveningMinutes,
+          evening_pay: result.eveningPay,
+          night_minutes: result.nightMinutes,
+          night_pay: result.nightPay,
+          saturday_minutes: result.saturdayMinutes,
+          saturday_pay: result.saturdayPay,
+          sunday_minutes: result.sundayMinutes,
+          sunday_pay: result.sundayPay,
+          total_pay: result.totalPay,
+          experience_level: experience,
+          base_wage: parseFloat(baseWage)
+        });
+        error = retryError;
+      }
 
       if (error) throw error;
       
@@ -145,12 +212,27 @@ export default function Home() {
     }
   };
 
-  const saveSettings = (newWage?: string, newExp?: string) => {
+  const saveSettings = async (newWage?: string, newExp?: string, newName?: string) => {
+    const finalName = newName !== undefined ? newName : userName;
     localStorage.setItem("base-wage", newWage || baseWage);
+    localStorage.setItem("user-name", finalName);
     localStorage.setItem("experience", newExp || experience);
     localStorage.setItem("evening-bonus", eveningBonus);
     localStorage.setItem("night-bonus", nightBonus);
     localStorage.setItem("sunday-bonus", sundayBonus);
+
+    // Sync name to Supabase profile if logged in
+    if (session && supabase && newName !== undefined) {
+      try {
+        await supabase.from("profiles").upsert({
+          id: session.user.id,
+          full_name: finalName,
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Error syncing profile to Supabase:", err);
+      }
+    }
   };
 
   const handleExperienceChange = (exp: string) => {
@@ -177,19 +259,28 @@ export default function Home() {
     }
 
     const breaks = [];
-    if (breakStart && breakEnd) {
+    
+    const parseBreak = (bStartStr: string, bEndStr: string) => {
+      if (!bStartStr || !bEndStr) return null;
       const bStart = new Date(startTime);
-      const [sh, sm] = breakStart.split(":").map(Number);
+      const [sh, sm] = bStartStr.split(":").map(Number);
       bStart.setHours(sh, sm, 0, 0);
       if (bStart < startTime) bStart.setDate(bStart.getDate() + 1);
 
       const bEnd = new Date(bStart);
-      const [eh, em] = breakEnd.split(":").map(Number);
+      const [eh, em] = bEndStr.split(":").map(Number);
       bEnd.setHours(eh, em, 0, 0);
       if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
+      return { start: bStart, end: bEnd };
+    };
 
-      breaks.push({ start: bStart, end: bEnd });
-    }
+    const firstBrk = parseBreak(breakStart, breakEnd);
+    if (firstBrk) breaks.push(firstBrk);
+
+    extraBreaks.forEach(eb => {
+      const brk = parseBreak(eb.start, eb.end);
+      if (brk) breaks.push(brk);
+    });
 
     saveSettings();
 
@@ -220,7 +311,10 @@ export default function Home() {
         <div className="mt-4 sm:mt-0 flex gap-2">
           {session ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400 hidden sm:inline">{session.user.email}</span>
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-bold text-white leading-tight">{userName || session.user.email}</div>
+                {userName && <div className="text-[10px] text-slate-500">{session.user.email}</div>}
+              </div>
               <button 
                 onClick={() => supabase?.auth.signOut()}
                 className="flex items-center space-x-2 text-sm bg-slate-700 hover:bg-slate-600 transition px-4 py-2 rounded-lg text-slate-200"
@@ -277,6 +371,16 @@ export default function Home() {
               <span>Asetukset (AUT 2025-2026)</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-400 mb-1">Käyttäjän nimi</label>
+                <input 
+                  type="text" 
+                  value={userName} 
+                  onChange={(e) => { setUserName(e.target.value); saveSettings(undefined, undefined, e.target.value); }} 
+                  placeholder="Esim. Nasratollah Rezai"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Palveluvuodet (TES Taulukko)</label>
                 <select 
@@ -339,16 +443,64 @@ export default function Home() {
             </div>
 
             <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6">
-              <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Tauko</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Tauko alkaa</label>
-                  <input type="time" value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Tauot (Yht. 1h palkaton)</h3>
+                <button 
+                  onClick={() => setExtraBreaks([...extraBreaks, { start: "", end: "" }])}
+                  className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg text-blue-300 transition"
+                >
+                  + Lisää tauko
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Päätauko alkaa</label>
+                    <input type="time" value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Päätauko päättyy</label>
+                    <input type="time" value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Tauko päättyy</label>
-                  <input type="time" value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark] min-w-0 box-border" />
-                </div>
+
+                {extraBreaks.map((eb, idx) => (
+                  <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_40px] gap-4 items-end border-t border-slate-800/50 pt-3">
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Tauko {idx + 2} alkaa</label>
+                      <input 
+                        type="time" 
+                        value={eb.start} 
+                        onChange={(e) => {
+                          const newBreaks = [...extraBreaks];
+                          newBreaks[idx].start = e.target.value;
+                          setExtraBreaks(newBreaks);
+                        }} 
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark]" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Tauko {idx + 2} päättyy</label>
+                      <input 
+                        type="time" 
+                        value={eb.end} 
+                        onChange={(e) => {
+                          const newBreaks = [...extraBreaks];
+                          newBreaks[idx].end = e.target.value;
+                          setExtraBreaks(newBreaks);
+                        }} 
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 sm:px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark]" 
+                      />
+                    </div>
+                    <button 
+                      onClick={() => setExtraBreaks(extraBreaks.filter((_, i) => i !== idx))}
+                      className="p-2 text-slate-500 hover:text-red-400 transition mb-0.5"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -376,43 +528,71 @@ export default function Home() {
               <div className="space-y-3 mb-6">
                 <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Palkan ja lisien erittely</h3>
                 
-                <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                  <span className="text-slate-300">Normaali työmaa / Brutto <span className="text-slate-500 text-sm ml-2">({formatDuration(result.paidMinutes)})</span></span>
-                  <span className="font-medium">{result.normalPay?.toFixed(2)} €</span>
+                <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-700 pb-2">
+                  <span>Nimike</span>
+                  <span className="text-right">Yksiköt</span>
+                  <span className="text-right">A-hinta</span>
+                  <span className="text-right">Yhteensä</span>
+                </div>
+                
+                <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                  <span className="text-slate-300 text-xs sm:text-sm">11000 Tuntityö</span>
+                  <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.paidMinutes / 60).toFixed(2)}</span>
+                  <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
+                  <span className="text-right font-medium text-white text-xs sm:text-sm">{result.normalPay?.toFixed(2)} €</span>
                 </div>
 
+                {result.waitingMinutes > 0 && (
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">40300 Odotusajan palkka</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.waitingMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
+                    <span className="text-right font-medium text-blue-300 text-xs sm:text-sm">{result.waitingPay?.toFixed(2)} €</span>
+                  </div>
+                )}
+
                 {result.eveningMinutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Iltalisä ({eveningBonus}%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.eveningMinutes)})</span></span>
-                    <span className="font-medium text-indigo-300">{result.eveningPay?.toFixed(2)} €</span>
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">30020 Iltavuorolisä ({eveningBonus}%)</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.eveningMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(eveningBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right font-medium text-indigo-300 text-xs sm:text-sm">{result.eveningPay?.toFixed(2)} €</span>
                   </div>
                 )}
 
                 {result.nightMinutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Yölisä ({nightBonus}%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.nightMinutes)})</span></span>
-                    <span className="font-medium text-purple-300">{result.nightPay?.toFixed(2)} €</span>
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">30030 Yövuorolisä ({nightBonus}%)</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.nightMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(nightBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right font-medium text-purple-300 text-xs sm:text-sm">{result.nightPay?.toFixed(2)} €</span>
                   </div>
                 )}
 
                 {result.sundayMinutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Sunnuntaityölisä ({sundayBonus}%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.sundayMinutes)})</span></span>
-                    <span className="font-medium text-pink-300">{result.sundayPay?.toFixed(2)} €</span>
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">20110 Sunnuntaitunnit ({sundayBonus}%)</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.sundayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * (parseFloat(sundayBonus) / 100)).toFixed(2)}</span>
+                    <span className="text-right font-medium text-pink-300 text-xs sm:text-sm">{result.sundayPay?.toFixed(2)} €</span>
                   </div>
                 )}
 
                 {result.saturdayMinutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Lauantailisä (10%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.saturdayMinutes)})</span></span>
-                    <span className="font-medium text-teal-300">{result.saturdayPay?.toFixed(2)} €</span>
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">30060 Lauantailisä (10%)</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.saturdayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(baseWage) * 0.10).toFixed(2)}</span>
+                    <span className="text-right font-medium text-teal-300 text-xs sm:text-sm">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
                 )}
                 
                 {result.holidayMinutes > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
-                    <span className="text-slate-300">Arkipyhälisä (100%) <span className="text-slate-500 text-sm ml-2">({formatDuration(result.holidayMinutes)})</span></span>
-                    <span className="font-medium text-red-300">{result.holidayPay?.toFixed(2)} €</span>
+                  <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
+                    <span className="text-slate-300 text-xs sm:text-sm">Arkipyhälisä (100%)</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.holidayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
+                    <span className="text-right font-medium text-red-300 text-xs sm:text-sm">{result.holidayPay?.toFixed(2)} €</span>
                   </div>
                 )}
                 
@@ -481,10 +661,70 @@ export default function Home() {
                    {Object.entries(periods).map(([periodKey, shifts]) => {
                      const periodShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                      const firstDate = new Date(periodShifts[0].date);
-                     const lastDate = new Date(periodShifts[periodShifts.length - 1].date);
-                     const totalPay = periodShifts.reduce((sum, s) => sum + (Number(s.total_pay) || 0), 0);
-                     const totalMinutes = periodShifts.reduce((sum, s) => sum + (Number(s.paid_minutes) || 0), 0);
-                     const holidayShifts = periodShifts.filter(s => isPublicHoliday(new Date(s.date)));
+                                      const analyzedPeriodShifts = periodShifts.map(shift => {
+                        const sTime = new Date(shift.start_input);
+                        const eTime = new Date(shift.end_input);
+                        const bList = [];
+                        
+                        // Parse multiple breaks from pipe-separated strings
+                        if (shift.break_start_str && shift.break_end_str) {
+                          const starts = shift.break_start_str.split("|");
+                          const ends = shift.break_end_str.split("|");
+                          
+                          const parseB = (bss: string, bes: string) => {
+                            if (!bss || !bes) return null;
+                            const bStart = new Date(sTime);
+                            const [sh, sm] = bss.split(":").map(Number);
+                            bStart.setHours(sh, sm, 0, 0);
+                            if (bStart < sTime) bStart.setDate(bStart.getDate() + 1);
+                            const bEnd = new Date(bStart);
+                            const [eh, em] = bes.split(":").map(Number);
+                            bEnd.setHours(eh, em, 0, 0);
+                            if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
+                            return { start: bStart, end: bEnd };
+                          };
+                          
+                          starts.forEach((s, i) => {
+                            const b = parseB(s, ends[i]);
+                            if (b) bList.push(b);
+                          });
+                        }
+                        
+                        // Parse extra breaks if stored (currently only first one is saved to DB columns)
+                        // If we had a JSON column we'd use it here.
+                        
+                        return {
+                          ...shift,
+                          calc: calculateSalary({
+                            startTime: sTime,
+                            endTime: eTime,
+                            breaks: bList,
+                            baseWage: Number(shift.base_wage) || parseFloat(baseWage)
+                          })
+                        };
+                      });
+
+                      const totalPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.totalPay || 0), 0);
+                      const totalMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.paidMinutes, 0);
+                      
+                      // Breakdown for period
+                      const periodNormalPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.normalPay || 0), 0);
+                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.waitingPay || 0), 0);
+                      const periodEveningPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.eveningPay || 0), 0);
+                      const periodNightPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.nightPay || 0), 0);
+                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.saturdayPay || 0), 0);
+                      const periodSundayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.sundayPay || 0), 0);
+                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum, s) => sum + (s.calc.holidayPay || 0), 0);
+
+                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.paidMinutes, 0);
+                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.waitingMinutes, 0);
+                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.eveningMinutes, 0);
+                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.nightMinutes, 0);
+                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.saturdayMinutes, 0);
+                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.sundayMinutes, 0);
+                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum, s) => sum + s.calc.holidayMinutes, 0);
+
+                      const holidayShifts = analyzedPeriodShifts.filter(s => isPublicHoliday(new Date(s.date)));
                      
                      // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
                      const totalHours = totalMinutes / 60;
@@ -495,6 +735,8 @@ export default function Home() {
                      
                      // Lasketaan ylityölisän arvo (50% ja 100% lisäosan osuus)
                      const periodOvertimePay = (periodOvertime50 * (parseFloat(baseWage) * 0.5)) + (periodOvertime100 * (parseFloat(baseWage) * 1.0));
+
+                     const lastDate = new Date(periodShifts[periodShifts.length - 1].date);
 
                      return (
                        <div key={periodKey} className="space-y-3">
@@ -529,6 +771,72 @@ export default function Home() {
                                <span className="text-amber-300 font-bold">+ {periodOvertimePay.toFixed(2)} €</span>
                              </div>
                            )}
+
+                           {/* Jakson erittely */}
+                           <div className="mt-2 space-y-1 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                             <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
+                               <span>Nimike</span>
+                               <span className="text-right">Tunnit</span>
+                               <span className="text-right">Euroa</span>
+                             </div>
+
+                             <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-slate-400">
+                               <span>11000 Tuntityö</span>
+                               <span className="text-right">{(periodNormalMinutes / 60).toFixed(2)}</span>
+                               <span className="text-right font-medium">{periodNormalPay.toFixed(2)}</span>
+                             </div>
+                             
+                             {periodWaitingMinutes > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-blue-400/80">
+                                 <span>40300 Odotusajan palkka</span>
+                                 <span className="text-right">{(periodWaitingMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodWaitingPay.toFixed(2)}</span>
+                               </div>
+                             )}
+
+                             {periodEveningPay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-indigo-400/80">
+                                 <span>30020 Iltavuorolisä</span>
+                                 <span className="text-right">{(periodEveningMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodEveningPay.toFixed(2)}</span>
+                               </div>
+                             )}
+                             {periodNightPay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-purple-400/80">
+                                 <span>30030 Yövuorolisä</span>
+                                 <span className="text-right">{(periodNightMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodNightPay.toFixed(2)}</span>
+                               </div>
+                             )}
+                             {periodSaturdayPay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-teal-400/80">
+                                 <span>30060 Lauantailisä</span>
+                                 <span className="text-right">{(periodSaturdayMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodSaturdayPay.toFixed(2)}</span>
+                               </div>
+                             )}
+                             {periodSundayPay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-pink-400/80">
+                                 <span>20110 Sunnuntaitunnit</span>
+                                 <span className="text-right">{(periodSundayMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodSundayPay.toFixed(2)}</span>
+                               </div>
+                             )}
+                             {periodHolidayPay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-red-400/80">
+                                 <span>Arkipyhälisä</span>
+                                 <span className="text-right">{(periodHolidayMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right font-medium">{periodHolidayPay.toFixed(2)}</span>
+                               </div>
+                             )}
+                             {periodOvertimePay > 0 && (
+                               <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-amber-400/80 pt-1 border-t border-slate-700/50">
+                                 <span>Ylityölisät (50% & 100%)</span>
+                                 <span className="text-right">-</span>
+                                 <span className="text-right font-medium">{periodOvertimePay.toFixed(2)}</span>
+                               </div>
+                             )}
+                           </div>
                          </div>
                          
                          {/* Jakson vuorot */}

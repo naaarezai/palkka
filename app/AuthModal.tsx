@@ -11,6 +11,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isRegister, setIsRegister] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,14 +34,33 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (isRegister) {
-        const { error } = await supabase.auth.signUp({
+        if (!fullName) {
+          throw new Error("Ole hyvä ja syötä nimesi.");
+        }
+        
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              full_name: fullName
+            }
           },
         });
-        if (error) throw error;
+        
+        if (signUpError) throw signUpError;
+        
+        if (data.user) {
+          // Tallennetaan nimi myös profiles-tauluun
+          const { error: profileError } = await supabase.from("profiles").upsert({
+            id: data.user.id,
+            full_name: fullName,
+            updated_at: new Date().toISOString()
+          });
+          if (profileError) console.warn("Profile save error:", profileError.message);
+        }
+
         setMessage("Rekisteröityminen onnistui! Tarkista sähköpostivahvistus.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -73,6 +93,23 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
+            {isRegister && (
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Koko nimi</label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <input 
+                    type="text" 
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Esim. Matti Meikäläinen"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1">Sähköposti</label>
               <div className="relative">

@@ -11,6 +11,7 @@ export interface CalculationResult {
   totalMinutes: number;
   paidMinutes: number;
   normalMinutes: number;
+  waitingMinutes: number;    // > 60 min breaks
   overtime50Minutes: number;
   overtime100Minutes: number;
   eveningMinutes: number;
@@ -21,6 +22,7 @@ export interface CalculationResult {
   
   // Euro amounts based on AKT percentages
   normalPay?: number;
+  waitingPay?: number;       // 100% of base wage for excess break
   overtime50Pay?: number;
   overtime100Pay?: number;
   eveningPay?: number;       // 15%
@@ -36,55 +38,64 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   
   let totalMinutes = 0;
   let paidMinutes = 0;
+  let waitingMinutes = 0;
   let eveningMinutes = 0;
   let nightMinutes = 0;
   let sundayMinutes = 0;
   let saturdayMinutes = 0;
   let holidayMinutes = 0;
 
+  let cumulativeUnpaidBreakMinutes = 0;
+
   // We iterate minute by minute
   for (let m = new Date(startTime); m < endTime; m.setMinutes(m.getMinutes() + 1)) {
     totalMinutes++;
     
-    // Check if within break
-    let isBreak = false;
+    // Check if within any break
+    let isBreakMinute = false;
     for (const brk of breaks) {
       if (m >= brk.start && m < brk.end) {
-        isBreak = true;
+        isBreakMinute = true;
         break;
       }
     }
 
-    if (!isBreak) {
+    if (isBreakMinute) {
+      // Rule: Cumulative first 60 mins of ALL breaks are unpaid. Excess is waiting time.
+      if (cumulativeUnpaidBreakMinutes < 60) {
+        cumulativeUnpaidBreakMinutes++;
+        // This is an unpaid break minute, do nothing for pay
+      } else {
+        // This break minute is now paid waiting time
+        waitingMinutes++;
+        // Apply bonuses to waiting time too
+        applyBonuses(m);
+      }
+    } else {
+      // Normal working minute
       paidMinutes++;
-      const hours = m.getHours();
-      const day = m.getDay(); // 0 is Sunday, 6 is Saturday
-      const holiday = isPublicHoliday(m);
+      applyBonuses(m);
+    }
 
-      // Evening time (18:00 - 22:00)
+    function applyBonuses(time: Date) {
+      const hours = time.getHours();
+      const day = time.getDay();
+      const holiday = isPublicHoliday(time);
+
       if (hours >= 18 && hours < 22) {
         eveningMinutes++;
       }
-      
-      // Night time (22:00 - 06:00)
       if (hours >= 22 || hours < 6) {
         nightMinutes++;
       }
-      
-      // Saturday bonus (15:00 - 18:00)
-      // PDF line 125: "arkilauantaina klo 15.00-18.00"
       if (day === 6 && hours >= 15 && hours < 18) {
         saturdayMinutes++;
       }
-      
-      // Sunday OR public holiday → 100% lisä
-      // Ei tuplalaskentaa: jos on sunnuntai JA pyhäpäivä, lasketaan vain kerran
       if (day === 0 && !holiday) {
         sundayMinutes++;
       } else if (holiday && day !== 0) {
         holidayMinutes++;
       } else if (day === 0 && holiday) {
-        // Sunnuntai + pyhäpäivä → lasketaan sunnuntailisänä (sama 100%)
         sundayMinutes++;
       }
     }
@@ -92,8 +103,8 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
 
   // Pay calculation
   const basePerMin = baseWage / 60;
-  
   const normalPay = paidMinutes * basePerMin;
+  const waitingPay = waitingMinutes * basePerMin;
   
   const eveningPay = eveningMinutes * basePerMin * 0.15;
   const nightPay = nightMinutes * basePerMin * 0.20;
@@ -101,12 +112,13 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
   const saturdayPay = saturdayMinutes * basePerMin * 0.10;
   const holidayPay = holidayMinutes * basePerMin * 1.0;
   
-  const totalPay = normalPay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
+  const totalPay = normalPay + waitingPay + eveningPay + nightPay + sundayPay + saturdayPay + holidayPay;
 
   return {
     totalMinutes,
     paidMinutes,
     normalMinutes: paidMinutes,
+    waitingMinutes,
     overtime50Minutes: 0,
     overtime100Minutes: 0,
     eveningMinutes,
@@ -115,6 +127,7 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     saturdayMinutes,
     holidayMinutes,
     normalPay,
+    waitingPay,
     overtime50Pay: 0,
     overtime100Pay: 0,
     eveningPay,
