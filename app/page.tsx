@@ -544,8 +544,8 @@ export default function Home() {
                   <div className="text-xl font-semibold text-white">{formatDuration(result.totalMinutes)}</div>
                 </div>
                 <div className="bg-blue-950/30 rounded-xl p-4 border border-blue-900/50">
-                  <div className="text-blue-300 text-sm mb-1">Palkallinen aika</div>
-                  <div className="text-xl font-semibold text-blue-100">{formatDuration(result.paidMinutes)}</div>
+                  <div className="text-blue-300 text-sm mb-1">Palkallinen aika (sidonnaisuus)</div>
+                  <div className="text-xl font-semibold text-blue-100">{formatDuration(result.paidMinutes + result.waitingMinutes)}</div>
                 </div>
               </div>
 
@@ -561,7 +561,7 @@ export default function Home() {
                 
                 <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                   <span className="text-slate-300 text-xs sm:text-sm">11000 Tuntityö</span>
-                  <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.paidMinutes / 60).toFixed(2)}</span>
+                  <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.paidMinutes)}</span>
                   <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
                   <span className="text-right font-medium text-white text-xs sm:text-sm">{result.normalPay?.toFixed(2)} €</span>
                 </div>
@@ -569,7 +569,7 @@ export default function Home() {
                 {result.waitingMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">40300 Odotusajan palkka</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.waitingMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.waitingMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{parseFloat(baseWage).toFixed(2)}</span>
                     <span className="text-right font-medium text-blue-300 text-xs sm:text-sm">{result.waitingPay?.toFixed(2)} €</span>
                   </div>
@@ -578,7 +578,7 @@ export default function Home() {
                 {result.eveningMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30020 Iltavuorolisä ({eveningBonus}%)</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.eveningMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.eveningMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-indigo-300 text-xs sm:text-sm">{result.eveningPay?.toFixed(2)} €</span>
                   </div>
@@ -587,7 +587,7 @@ export default function Home() {
                 {result.nightMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30030 Yövuorolisä ({nightBonus}%)</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.nightMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.nightMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-purple-300 text-xs sm:text-sm">{result.nightPay?.toFixed(2)} €</span>
                   </div>
@@ -596,7 +596,7 @@ export default function Home() {
                 {result.sundayMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">20110 Sunnuntaitunnit ({sundayBonus}%)</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.sundayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.sundayMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus) / 100) ).toFixed(2)}</span>
                     <span className="text-right font-medium text-pink-300 text-xs sm:text-sm">{result.sundayPay?.toFixed(2)} €</span>
                   </div>
@@ -605,7 +605,7 @@ export default function Home() {
                 {result.saturdayMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">30060 Lauantailisä (10%)</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.saturdayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.saturdayMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
                     <span className="text-right font-medium text-teal-300 text-xs sm:text-sm">{result.saturdayPay?.toFixed(2)} €</span>
                   </div>
@@ -614,7 +614,7 @@ export default function Home() {
                 {result.holidayMinutes > 0 && (
                   <div className="grid grid-cols-[1fr_repeat(3,80px)] sm:grid-cols-[1fr_repeat(3,100px)] gap-2 py-2 border-b border-slate-700/50 items-center">
                     <span className="text-slate-300 text-xs sm:text-sm">Arkipyhälisä (100%)</span>
-                    <span className="text-right text-slate-400 text-xs sm:text-sm">{(result.holidayMinutes / 60).toFixed(2)}</span>
+                    <span className="text-right text-slate-400 text-xs sm:text-sm">{formatDuration(result.holidayMinutes)}</span>
                     <span className="text-right text-slate-400 text-xs sm:text-sm">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
                     <span className="text-right font-medium text-red-300 text-xs sm:text-sm">{result.holidayPay?.toFixed(2)} €</span>
                   </div>
@@ -802,14 +802,14 @@ export default function Home() {
                            <div className="mt-2 space-y-1 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
                             <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
                               <span>Nimike</span>
-                              <span className="text-right">Tunnit</span>
+                              <span className="text-right">Yksiköt</span>
                               <span className="text-right">A-hinta</span>
                               <span className="text-right">Euroa</span>
                             </div>
 
                              <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-slate-400">
                                <span>11000 Tuntityö</span>
-                               <span className="text-right">{(periodNormalMinutes / 60).toFixed(2)}</span>
+                               <span className="text-right">{formatDuration(periodNormalMinutes)}</span>
                                <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
                                <span className="text-right font-medium">{periodNormalPay.toFixed(2)}</span>
                              </div>
@@ -817,7 +817,7 @@ export default function Home() {
                              {periodWaitingMinutes > 0 && (
                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-blue-400/80">
                                  <span>40300 Odotusajan palkka</span>
-                                 <span className="text-right">{(periodWaitingMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right">{formatDuration(periodWaitingMinutes)}</span>
                                  <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
                                  <span className="text-right font-medium">{periodWaitingPay.toFixed(2)}</span>
                                </div>
@@ -826,7 +826,7 @@ export default function Home() {
                               {periodEveningPay > 0 && (
                                 <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-indigo-400/80">
                                   <span>30020 Iltavuorolisä</span>
-                                  <span className="text-right">{(periodEveningMinutes / 60).toFixed(2)}</span>
+                                  <span className="text-right">{formatDuration(periodEveningMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus)/100) ).toFixed(2)}</span>
                                   <span className="text-right font-medium">{periodEveningPay.toFixed(2)}</span>
                                 </div>
@@ -834,7 +834,7 @@ export default function Home() {
                               {periodNightPay > 0 && (
                                 <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-purple-400/80">
                                   <span>30030 Yövuorolisä</span>
-                                  <span className="text-right">{(periodNightMinutes / 60).toFixed(2)}</span>
+                                  <span className="text-right">{formatDuration(periodNightMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus)/100) ).toFixed(2)}</span>
                                   <span className="text-right font-medium">{periodNightPay.toFixed(2)}</span>
                                 </div>
@@ -842,7 +842,7 @@ export default function Home() {
                               {periodSaturdayPay > 0 && (
                                 <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-teal-400/80">
                                   <span>30060 Lauantailisä</span>
-                                  <span className="text-right">{(periodSaturdayMinutes / 60).toFixed(2)}</span>
+                                  <span className="text-right">{formatDuration(periodSaturdayMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
                                   <span className="text-right font-medium">{periodSaturdayPay.toFixed(2)}</span>
                                 </div>
@@ -850,7 +850,7 @@ export default function Home() {
                               {periodSundayPay > 0 && (
                                 <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-pink-400/80">
                                   <span>20110 Sunnuntaitunnit</span>
-                                  <span className="text-right">{(periodSundayMinutes / 60).toFixed(2)}</span>
+                                  <span className="text-right">{formatDuration(periodSundayMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus)/100) ).toFixed(2)}</span>
                                   <span className="text-right font-medium">{periodSundayPay.toFixed(2)}</span>
                                 </div>
@@ -858,7 +858,7 @@ export default function Home() {
                              {periodHolidayPay > 0 && (
                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-red-400/80">
                                  <span>Arkipyhälisä</span>
-                                 <span className="text-right">{(periodHolidayMinutes / 60).toFixed(2)}</span>
+                                 <span className="text-right">{formatDuration(periodHolidayMinutes)}</span>
                                  <span className="text-right">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
                                  <span className="text-right font-medium">{periodHolidayPay.toFixed(2)}</span>
                                </div>
