@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { calculateSalary, CalculationResult } from "../utils/calculator";
-import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History } from "lucide-react";
+import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History, FileUp, CheckCircle, AlertCircle } from "lucide-react";
 import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
 import { Session } from "@supabase/supabase-js";
 import AuthModal from "./AuthModal";
+import { parsePdfSchedule, ParsedSchedule } from "../utils/pdfParser";
 
 interface Shift {
   id: string;
@@ -61,6 +62,9 @@ export default function Home() {
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [savedShifts, setSavedShifts] = useState<Shift[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Load local settings on mount
@@ -314,6 +318,78 @@ export default function Home() {
     setResult(calcObj);
   };
 
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input so re-uploading the same file triggers onChange
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setPdfStatus({ type: "error", message: "Valitse PDF-tiedosto (.pdf)" });
+      return;
+    }
+
+    setIsParsing(true);
+    setPdfStatus(null);
+
+    try {
+      const parsed: ParsedSchedule = await parsePdfSchedule(file);
+
+      // Use today's date as the base if no date is selected yet
+      const baseDate = startInput ? new Date(startInput) : new Date();
+      const dateStr = format(baseDate, "yyyy-MM-dd");
+
+      // Set start and end times as datetime-local values
+      const newStart = `${dateStr}T${parsed.startTime}`;
+      setStartInput(newStart);
+
+      // If end time is earlier than start, it means the shift crosses midnight
+      const [sh, sm] = parsed.startTime.split(":").map(Number);
+      const [eh, em] = parsed.endTime.split(":").map(Number);
+      let endDate = new Date(baseDate);
+      if (eh * 60 + em <= sh * 60 + sm) {
+        endDate.setDate(endDate.getDate() + 1);
+      }
+      const endDateStr = format(endDate, "yyyy-MM-dd");
+      setEndInput(`${endDateStr}T${parsed.endTime}`);
+
+      // Set breaks
+      if (parsed.breaks.length > 0) {
+        setBreakStart(parsed.breaks[0].start);
+        setBreakEnd(parsed.breaks[0].end);
+
+        // Additional breaks
+        if (parsed.breaks.length > 1) {
+          setExtraBreaks(
+            parsed.breaks.slice(1).map((b) => ({ start: b.start, end: b.end }))
+          );
+        } else {
+          setExtraBreaks([]);
+        }
+      } else {
+        setBreakStart("");
+        setBreakEnd("");
+        setExtraBreaks([]);
+      }
+
+      const routeLabel = parsed.routeId ? ` (${parsed.routeId})` : "";
+      const dayLabel = parsed.dayType === "sunday" ? " 🔴 Sunnuntai" : parsed.dayType === "saturday" ? " 🟡 Lauantai" : "";
+      setPdfStatus({
+        type: "success",
+        message: `Ajolista luettu${routeLabel}${dayLabel} — ${parsed.startTime}–${parsed.endTime}, ${parsed.breaks.length} tauko(a)`,
+      });
+
+      // Auto-clear status after 8 seconds
+      setTimeout(() => setPdfStatus(null), 8000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "PDF:n lukeminen epäonnistui";
+      setPdfStatus({ type: "error", message });
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   const formatDuration = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = Math.floor(mins % 60);
@@ -450,10 +526,52 @@ export default function Home() {
 
           {/* Shift Input Card */}
           <div className="bg-slate-800 rounded-2xl p-4 sm:p-6 border border-slate-700/50 shadow-xl">
-            <h2 className="text-xl font-semibold mb-4 flex items-center space-x-2 text-slate-200">
-              <Clock className="text-blue-400" />
-              <span>Vuoron syöttö</span>
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+              <h2 className="text-xl font-semibold flex items-center space-x-2 text-slate-200">
+                <Clock className="text-blue-400" />
+                <span>Vuoron syöttö</span>
+              </h2>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                  id="pdf-upload"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isParsing}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-800 disabled:to-indigo-800 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-900/30 transition-all transform hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  {isParsing ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <FileUp size={16} />
+                  )}
+                  <span>{isParsing ? "Luetaan..." : "Lataa ajolista (PDF)"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* PDF Status Message */}
+            {pdfStatus && (
+              <div
+                className={`mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm animate-in slide-in-from-top-2 fade-in duration-300 ${
+                  pdfStatus.type === "success"
+                    ? "bg-emerald-950/40 border border-emerald-800/50 text-emerald-300"
+                    : "bg-red-950/40 border border-red-800/50 text-red-300"
+                }`}
+              >
+                {pdfStatus.type === "success" ? (
+                  <CheckCircle size={18} className="text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle size={18} className="text-red-400 shrink-0" />
+                )}
+                <span>{pdfStatus.message}</span>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
               <div>
