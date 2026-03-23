@@ -95,38 +95,63 @@ function parseWorkHours(text: string): { start: string; end: string } | null {
 }
 
 /**
- * Parse breaks from "Tauot:" line.
- * Handles single break like "17.38-18.23" and multiple breaks like "14.42 15.33" "18.02 19.18"
+ * Parse breaks from "Tauot:" section.
+ * Handles various formats:
+ *  - "17.38-18.23"
+ *  - "14.42 15.33  18.02 19.18"
+ *  - "14:42 - 15:33"
  */
 function parseBreaks(text: string): { start: string; end: string }[] {
   const breaks: { start: string; end: string }[] = [];
 
-  // Find the "Tauot:" section
-  const tauotIdx = text.search(/Tauot\s*[:\s]/i);
-  if (tauotIdx === -1) return breaks;
+  // Find the "Tauot" keyword (with optional colon/space after)
+  const tauotMatch = text.match(/Tauot\s*:?\s*/i);
+  if (!tauotMatch || tauotMatch.index === undefined) return breaks;
 
-  // Get text after "Tauot:" up to the next section or end
-  const afterTauot = text.substring(tauotIdx);
-  // Limit to a reasonable chunk (next 200 chars or next section keyword)
-  const nextSection = afterTauot.search(
-    /\n|Tunnit|Linja|Ajolista|Autonumero|Paikka/i
+  // Get text AFTER the "Tauot:" keyword
+  const startPos = tauotMatch.index + tauotMatch[0].length;
+  const afterTauot = text.substring(startPos);
+
+  // Limit to a reasonable section (up to next known keyword or 500 chars)
+  const nextKeyword = afterTauot.search(
+    /(?:Tunnit|Linja|Ajolista|Autonumero|Paikka|Kuljettaja|Lähtö|Auto)\s*:/i
   );
   const tauotSection =
-    nextSection > 10
-      ? afterTauot.substring(0, nextSection)
-      : afterTauot.substring(0, 200);
+    nextKeyword > 0
+      ? afterTauot.substring(0, nextKeyword)
+      : afterTauot.substring(0, 500);
 
-  // Match all time pairs: "14.42-15.33" or "14.42 15.33" or "14:42-15:33"
-  const timePattern =
-    /(\d{1,2}[.:]\d{2})\s*[-–\s]\s*(\d{1,2}[.:]\d{2})/g;
+  console.log("[PDF Parser] Tauot section:", JSON.stringify(tauotSection));
+
+  // Strategy 1: Find dash-separated time pairs like "14.42-15.33" or "14:42 - 15:33"
+  const dashPattern = /(\d{1,2}[.:]\d{2})\s*[-–]\s*(\d{1,2}[.:]\d{2})/g;
   let match;
-  while ((match = timePattern.exec(tauotSection)) !== null) {
-    // Skip the "Tauot:" keyword itself
-    if (match.index < 6) continue;
+  while ((match = dashPattern.exec(tauotSection)) !== null) {
     breaks.push({
       start: normalizeTime(match[1]),
       end: normalizeTime(match[2]),
     });
+  }
+
+  // Strategy 2: If no dash-separated pairs found, collect all standalone times
+  // and pair them up: [start1, end1, start2, end2, ...]
+  if (breaks.length === 0) {
+    const allTimes: string[] = [];
+    const timePattern = /(\d{1,2}[.:]\d{2})/g;
+    let timeMatch;
+    while ((timeMatch = timePattern.exec(tauotSection)) !== null) {
+      allTimes.push(normalizeTime(timeMatch[1]));
+    }
+
+    console.log("[PDF Parser] All break times found:", allTimes);
+
+    // Pair them up: index 0-1 = break 1, index 2-3 = break 2, etc.
+    for (let i = 0; i + 1 < allTimes.length; i += 2) {
+      breaks.push({
+        start: allTimes[i],
+        end: allTimes[i + 1],
+      });
+    }
   }
 
   return breaks;
@@ -140,10 +165,22 @@ export async function parsePdfSchedule(
 ): Promise<ParsedSchedule> {
   const rawText = await extractTextFromPdf(file);
 
+  // Debug: log the full extracted text so we can see the PDF structure
+  console.log("[PDF Parser] ===== RAW TEXT =====");
+  console.log(rawText);
+  console.log("[PDF Parser] ====================");
+
   const dayType = parseDayType(rawText);
   const workHours = parseWorkHours(rawText);
   const breaks = parseBreaks(rawText);
   const routeId = parseRouteId(rawText);
+
+  console.log("[PDF Parser] Parsed result:", {
+    dayType,
+    workHours,
+    breaks,
+    routeId,
+  });
 
   if (!workHours) {
     throw new Error(
@@ -160,3 +197,4 @@ export async function parsePdfSchedule(
     rawText,
   };
 }
+
