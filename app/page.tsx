@@ -348,7 +348,7 @@ export default function Home() {
       // If end time is earlier than start, it means the shift crosses midnight
       const [sh, sm] = parsed.startTime.split(":").map(Number);
       const [eh, em] = parsed.endTime.split(":").map(Number);
-      let endDate = new Date(baseDate);
+      const endDate = new Date(baseDate);
       if (eh * 60 + em <= sh * 60 + sm) {
         endDate.setDate(endDate.getDate() + 1);
       }
