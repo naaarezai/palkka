@@ -937,14 +937,14 @@ export default function Home() {
 
                            {/* Jakson erittely */}
                            <div className="mt-2 space-y-1 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                            <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
+                            <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
                               <span>Nimike</span>
                               <span className="text-right">Yksiköt</span>
                               <span className="text-right">A-hinta</span>
                               <span className="text-right">Euroa</span>
                             </div>
 
-                             <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-slate-400">
+                             <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-slate-400">
                                <span>11000 Tuntityö</span>
                                <span className="text-right">{formatDuration(periodNormalMinutes)}</span>
                                <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
@@ -952,7 +952,7 @@ export default function Home() {
                              </div>
                              
                              {periodWaitingMinutes > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-blue-400/80">
+                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-blue-400/80">
                                  <span>40300 Odotusajan palkka</span>
                                  <span className="text-right">{formatDuration(periodWaitingMinutes)}</span>
                                  <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
@@ -961,7 +961,7 @@ export default function Home() {
                              )}
 
                               {periodEveningPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-indigo-400/80">
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-indigo-400/80">
                                   <span>30020 Iltavuorolisä</span>
                                   <span className="text-right">{formatDuration(periodEveningMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus)/100) ).toFixed(2)}</span>
@@ -969,7 +969,7 @@ export default function Home() {
                                 </div>
                               )}
                               {periodNightPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-purple-400/80">
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-purple-400/80">
                                   <span>30030 Yövuorolisä</span>
                                   <span className="text-right">{formatDuration(periodNightMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus)/100) ).toFixed(2)}</span>
@@ -977,7 +977,7 @@ export default function Home() {
                                 </div>
                               )}
                               {periodSaturdayPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-teal-400/80">
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-teal-400/80">
                                   <span>30060 Lauantailisä</span>
                                   <span className="text-right">{formatDuration(periodSaturdayMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
@@ -985,7 +985,7 @@ export default function Home() {
                                 </div>
                               )}
                               {periodSundayPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-pink-400/80">
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-pink-400/80">
                                   <span>20110 Sunnuntaitunnit</span>
                                   <span className="text-right">{formatDuration(periodSundayMinutes)}</span>
                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus)/100) ).toFixed(2)}</span>
@@ -993,7 +993,7 @@ export default function Home() {
                                 </div>
                               )}
                              {periodHolidayPay > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-red-400/80">
+                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-red-400/80">
                                  <span>Arkipyhälisä</span>
                                  <span className="text-right">{formatDuration(periodHolidayMinutes)}</span>
                                  <span className="text-right">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
@@ -1001,7 +1001,7 @@ export default function Home() {
                                </div>
                              )}
                              {periodOvertimePay > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-2 text-xs text-amber-400/80 pt-1 border-t border-slate-700/50">
+                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-amber-400/80 pt-1 border-t border-slate-700/50">
                                  <span>Ylityölisät (50% & 100%)</span>
                                  <span className="text-right">-</span>
                                  <span className="text-right">-</span>
