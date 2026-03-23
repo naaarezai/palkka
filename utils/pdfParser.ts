@@ -20,7 +20,9 @@ function normalizeTime(t: string): string {
 async function extractTextFromPdf(file: File): Promise<string> {
   // Dynamic import to avoid Next.js webpack bundling issues
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  
+  // Use unpkg CDN which always mirrors npm versions (cdnjs may lag behind)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
