@@ -8,7 +8,7 @@ import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
 import { Session } from "@supabase/supabase-js";
 import AuthModal from "./AuthModal";
-import { parsePdfSchedule, ParsedSchedule } from "../utils/pdfParser";
+import type { ParsedSchedule } from "../utils/pdfParser";
 
 interface Shift {
   id: string;
@@ -334,6 +334,7 @@ export default function Home() {
     setPdfStatus(null);
 
     try {
+      const { parsePdfSchedule } = await import("../utils/pdfParser");
       const parsed: ParsedSchedule = await parsePdfSchedule(file);
 
       // Use today's date as the base if no date is selected yet

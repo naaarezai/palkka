@@ -1,8 +1,3 @@
-import * as pdfjsLib from "pdfjs-dist";
-
-// Use CDN worker for performance
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
 export interface ParsedSchedule {
   dayType: "weekday" | "saturday" | "sunday";
   startTime: string; // "HH:MM"
@@ -20,9 +15,13 @@ function normalizeTime(t: string): string {
 }
 
 /**
- * Extract text content from a PDF file
+ * Extract text content from a PDF file using dynamically loaded pdfjs-dist
  */
 async function extractTextFromPdf(file: File): Promise<string> {
+  // Dynamic import to avoid Next.js webpack bundling issues
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
