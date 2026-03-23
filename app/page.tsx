@@ -29,6 +29,7 @@ interface AnalyzedShift extends Shift {
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"calculator" | "shifts" | "info">("calculator");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   
   // Settings
@@ -405,20 +406,47 @@ export default function Home() {
           <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">AKT Palkanlaskenta</h1>
           <p className="text-slate-400 mt-1">Kuljetusalan TES-pohjainen laskuri</p>
         </div>
-        <div className="mt-4 sm:mt-0 flex gap-2">
+        <div className="mt-4 sm:mt-0 flex gap-2 relative">
           {session ? (
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <div className="text-sm font-bold text-white leading-tight">{userName || session.user.email}</div>
-                {userName && <div className="text-[10px] text-slate-500">{session.user.email}</div>}
-              </div>
-              <button 
-                onClick={() => supabase?.auth.signOut()}
-                className="flex items-center space-x-2 text-sm bg-slate-700 hover:bg-slate-600 transition px-4 py-2 rounded-lg text-slate-200"
+            <div className="relative">
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 transition px-3 py-2 rounded-xl text-white"
               >
-                <LogOut size={16} />
-                <span>Kirjaudu ulos</span>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold text-white uppercase">
+                  {(userName || session.user.email || "?")[0]}
+                </div>
+                <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{userName || session.user.email}</span>
               </button>
+
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-in slide-in-from-top-2 fade-in duration-200">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Profiili</div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Nimi</label>
+                      <input
+                        type="text"
+                        value={userName}
+                        onChange={(e) => { setUserName(e.target.value); saveSettings(undefined, undefined, e.target.value); }}
+                        placeholder="Esim. Nasratollah Rezai"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      />
+                    </div>
+                    <div className="text-xs text-slate-500 truncate">{session.user.email}</div>
+                    <div className="border-t border-slate-700 pt-3">
+                      <button
+                        onClick={() => { supabase?.auth.signOut(); setIsProfileOpen(false); }}
+                        className="w-full flex items-center justify-center gap-2 text-sm bg-slate-700 hover:bg-red-900/50 hover:text-red-300 transition px-3 py-2 rounded-lg text-slate-300"
+                      >
+                        <LogOut size={14} />
+                        <span>Kirjaudu ulos</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <button 
@@ -468,16 +496,6 @@ export default function Home() {
               <span>Asetukset (AUT 2025-2026)</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-400 mb-1">Käyttäjän nimi</label>
-                <input 
-                  type="text" 
-                  value={userName} 
-                  onChange={(e) => { setUserName(e.target.value); saveSettings(undefined, undefined, e.target.value); }} 
-                  placeholder="Esim. Nasratollah Rezai"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Palveluvuodet (TES Taulukko)</label>
                 <select 
