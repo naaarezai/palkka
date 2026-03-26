@@ -1055,56 +1055,245 @@ export default function Home() {
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
                <BookOpen className="text-blue-400" />
-               <span>AKT Palkanlaskuri - Käyttöohje</span>
+               <span>AKT Palkanlaskuri – Käyttöohje</span>
              </h2>
+             <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+               Tämä sovellus laskee linja-autonkuljettajan palkan <strong className="text-slate-200">AKT:n työehtosopimuksen</strong> mukaisesti. Kun syötät vuoron työajat, sovellus laskee automaattisesti kaikki lisät ja kokonaispalkka-arvion.
+             </p>
 
              <div className="space-y-8 text-slate-300">
+
+               {/* 1. Tilin luominen */}
                <section>
                  <h3 className="text-lg font-semibold text-blue-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
-                   <Settings size={18} /> 1. Perusasetukset
+                   <UserIcon size={18} /> 1. Tilin luominen ja kirjautuminen
                  </h3>
-                 <p className="text-sm leading-relaxed">
-                   Ennen vuorojen syöttämistä, varmista että asetukset ovat oikein. Valitse <strong>Palveluvuodet</strong> TES-taulukosta, jolloin perustuntipalkka päivittyy automaattisesti. Muista valita <strong>HSL-ajot</strong>, jos ajat Helsingin seudun liikenteen sopimusajoja.
-                 </p>
-               </section>
-
-               <section>
-                 <h3 className="text-lg font-semibold text-emerald-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
-                   <ShieldCheck size={18} /> 2. Arkipyhät (100% lisä)
-                 </h3>
-                 <p className="text-sm leading-relaxed">
-                   Sovellus tunnistaa automaattisesti Suomen viralliset arkipyhät (esim. joulu, juhannus, pääsiäinen). Arkipyhänä tehty työ oikeuttaa <strong>100% lisään</strong>. Sovellus estää automaattisesti &quot;tuplabonukset&quot;, jos pyhä sattuu sunnuntaille.
-                 </p>
-               </section>
-
-               <section>
-                 <h3 className="text-lg font-semibold text-amber-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
-                   <Scale size={18} /> 3. Jaksotyö (80h sääntö)
-                 </h3>
-                 <div className="bg-slate-900/50 p-4 rounded-xl border border-amber-900/20 text-sm">
-                    <p className="mb-2 font-medium text-amber-200">AKT Jaksotyön periaate:</p>
-                    <ul className="list-disc ml-5 space-y-1 text-slate-400">
-                      <li>Tunnit tasaantuvat 14 vrk jakson sisällä.</li>
-                      <li>Päivittäistä ylityötä (esim. 8h ylitys) ei makseta erikseen.</li>
-                      <li>Ylityökorvaukset alkavat vasta kun <strong>80 tuntia</strong> ylittyy jakson aikana.</li>
-                      <li>80-92h = +50% | yli 92h = +100%</li>
-                    </ul>
+                 <div className="text-sm leading-relaxed space-y-2">
+                   <p>Oikeassa yläkulmassa näkyy <strong>&quot;Luo tili / Kirjaudu&quot;</strong> -painike.</p>
+                   <ul className="list-disc ml-5 space-y-1 text-slate-400">
+                     <li>Luo tili sähköpostilla ja salasanalla – tämä mahdollistaa vuorojen <strong className="text-slate-300">tallentamisen</strong>.</li>
+                     <li>Kirjautumisen jälkeen profiilikuvake ilmestyy yläkulmaan. Klikkaamalla sitä voit muuttaa nimesi tai kirjautua ulos.</li>
+                   </ul>
+                   <div className="mt-3 bg-blue-950/30 border border-blue-800/30 rounded-xl px-4 py-3 text-xs text-blue-300 flex items-start gap-2">
+                     <Info size={14} className="shrink-0 mt-0.5" />
+                     <span>Ilman kirjautumista voit silti käyttää laskuria, mutta vuoroja ei voi tallentaa.</span>
+                   </div>
                  </div>
                </section>
 
+               {/* 2. Asetukset */}
                <section>
-                 <h3 className="text-lg font-semibold text-purple-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
-                   <History size={18} /> 4. Palkkajaksot
+                 <h3 className="text-lg font-semibold text-emerald-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Settings size={18} /> 2. Asetukset – Palkkaperusteet
                  </h3>
-                 <p className="text-sm leading-relaxed">
-                   Sovellus jakaa vuorot 14 vuorokauden jaksoihin, jotka alkavat <strong>parillisista viikoista</strong> (esim. viikko 8, 10, 12...). Voit tarkastella jakson kokonaissaldoa &quot;Omat vuorot&quot; -välilehdeltä.
+                 <div className="text-sm leading-relaxed space-y-4">
+                   <p>Laskuri-välilehdellä yläosassa on <strong>Asetukset</strong> -osio. Täällä määritetään:</p>
+                   
+                   <div>
+                     <p className="font-medium text-slate-200 mb-2">Palveluvuodet (TES-taulukko)</p>
+                     <p className="text-slate-400 mb-2">Valitse pudotusvalikosta oma kokemusluokkasi. Perustuntipalkka päivittyy automaattisesti.</p>
+                     <div className="overflow-x-auto">
+                       <table className="w-full text-xs border-collapse">
+                         <thead>
+                           <tr className="border-b border-slate-700">
+                             <th className="text-left py-2 px-2 text-slate-500 font-semibold">Ryhmä</th>
+                             <th className="text-left py-2 px-2 text-slate-500 font-semibold">Kokemus</th>
+                             <th className="text-right py-2 px-2 text-slate-500 font-semibold">€/h</th>
+                           </tr>
+                         </thead>
+                         <tbody className="text-slate-400">
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2" rowSpan={4}>AKT Normaali</td><td className="py-1.5 px-2">Alle 4 v</td><td className="py-1.5 px-2 text-right">16,22</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2">4–8 v</td><td className="py-1.5 px-2 text-right">16,46</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2">8–12 v</td><td className="py-1.5 px-2 text-right">16,95</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2">Yli 12 v</td><td className="py-1.5 px-2 text-right">17,28</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2" rowSpan={4}>AKT HSL-ajot</td><td className="py-1.5 px-2">Alle 4 v</td><td className="py-1.5 px-2 text-right">17,89</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2">4–8 v</td><td className="py-1.5 px-2 text-right">18,57</td></tr>
+                           <tr className="border-b border-slate-800"><td className="py-1.5 px-2">8–12 v</td><td className="py-1.5 px-2 text-right">19,28</td></tr>
+                           <tr><td className="py-1.5 px-2">Yli 12 v</td><td className="py-1.5 px-2 text-right">19,73</td></tr>
+                         </tbody>
+                       </table>
+                     </div>
+                   </div>
+
+                   <div>
+                     <p className="font-medium text-slate-200 mb-1">KTA (Keskituntiansio)</p>
+                     <ul className="list-disc ml-5 space-y-1 text-slate-400">
+                       <li>KTA:ta käytetään <strong className="text-slate-300">ilta-, yö-, sunnuntai- ja arkipyhälisien</strong> laskemiseen.</li>
+                       <li>KTA löytyy omasta <strong className="text-slate-300">palkkalaskelmasta</strong>.</li>
+                       <li>Jos jätät kentän tyhjäksi, sovellus käyttää peruspalkkaa.</li>
+                     </ul>
+                   </div>
+
+                   <div>
+                     <p className="font-medium text-slate-200 mb-1">Lisäprosentit (TES-oletukset)</p>
+                     <ul className="list-disc ml-5 space-y-1 text-slate-400">
+                       <li><strong className="text-slate-300">Iltalisä 15 %</strong> (klo 18:00–22:00)</li>
+                       <li><strong className="text-slate-300">Yölisä 20 %</strong> (klo 22:00–06:00)</li>
+                       <li><strong className="text-slate-300">Sunnuntailisä 100 %</strong></li>
+                     </ul>
+                   </div>
+
+                   <div className="bg-emerald-950/30 border border-emerald-800/30 rounded-xl px-4 py-3 text-xs text-emerald-300 flex items-start gap-2">
+                     <CheckCircle size={14} className="shrink-0 mt-0.5" />
+                     <span>Asetukset tallentuvat automaattisesti selaimeesi – sinun ei tarvitse asettaa niitä joka kerta uudelleen.</span>
+                   </div>
+                 </div>
+               </section>
+
+               {/* 3. Vuoron syöttö */}
+               <section>
+                 <h3 className="text-lg font-semibold text-indigo-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Clock size={18} /> 3. Vuoron syöttö – Palkan laskeminen
+                 </h3>
+                 <div className="text-sm leading-relaxed space-y-4">
+                   <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                     <p className="font-medium text-indigo-200 mb-2">Vaihe 1: Syötä vuoron ajat</p>
+                     <ul className="list-decimal ml-5 space-y-1 text-slate-400">
+                       <li>Siirry <strong className="text-slate-300">Laskuri</strong>-välilehdelle.</li>
+                       <li>Täytä <strong className="text-slate-300">Vuoron alku</strong> ja <strong className="text-slate-300">Vuoron loppu</strong> (päivämäärä + kellonaika).</li>
+                     </ul>
+                   </div>
+                   <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                     <p className="font-medium text-indigo-200 mb-2">Vaihe 2: Lisää tauot</p>
+                     <ul className="list-decimal ml-5 space-y-1 text-slate-400">
+                       <li>Syötä <strong className="text-slate-300">päätauon</strong> alku- ja loppuaika.</li>
+                       <li>Jos sinulla on useampia taukoja, paina <strong className="text-slate-300">&quot;+ Lisää tauko&quot;</strong>.</li>
+                       <li>Turhia taukoja voi poistaa roskakorikuvakkeesta.</li>
+                     </ul>
+                   </div>
+                   <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                     <p className="font-medium text-indigo-200 mb-2">Vaihe 3: Laske ja tallenna</p>
+                     <ul className="list-decimal ml-5 space-y-1 text-slate-400">
+                       <li>Paina <strong className="text-slate-300">&quot;Laske Palkka&quot;</strong> – tulokset ilmestyvät sivun alaosaan.</li>
+                       <li>Paina <strong className="text-slate-300">&quot;Tallenna Vuoro&quot;</strong> tallentaaksesi vuoron tilillesi.</li>
+                     </ul>
+                   </div>
+
+                   <div className="bg-amber-950/30 border border-amber-800/30 rounded-xl px-4 py-3 text-xs text-amber-200 flex items-start gap-2">
+                     <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                     <span><strong>Tauon laskentasääntö:</strong> Ensimmäiset 60 minuuttia tauoista ovat palkattomia. Jos tauot yhteensä ylittävät 60 min, ylimenevä aika on <strong>odotusajan palkkaa</strong> (100 % peruspalkasta). Tämä vastaa AKT:n sidonnaisuusaika-periaatetta.</span>
+                   </div>
+                 </div>
+               </section>
+
+               {/* 4. PDF-lataus */}
+               <section>
+                 <h3 className="text-lg font-semibold text-violet-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <FileUp size={18} /> 4. PDF-ajolistan lataaminen
+                 </h3>
+                 <div className="text-sm leading-relaxed space-y-3">
+                   <p className="text-slate-400">Jos sinulla on ajolista PDF-muodossa, voit ladata sen suoraan:</p>
+                   <ul className="list-decimal ml-5 space-y-1 text-slate-400">
+                     <li>Paina violettia <strong className="text-slate-300">&quot;Lataa ajolista (PDF)&quot;</strong> -painiketta.</li>
+                     <li>Valitse PDF-tiedosto koneeltasi.</li>
+                     <li>Sovellus lukee automaattisesti: vuoron ajat, tauot, linjatunnuksen ja päivätyypin.</li>
+                     <li>Tiedot täyttyvät lomakkeeseen – tarkista ja paina <strong className="text-slate-300">&quot;Laske Palkka&quot;</strong>.</li>
+                   </ul>
+                   <div className="bg-violet-950/30 border border-violet-800/30 rounded-xl px-4 py-3 text-xs text-violet-300 flex items-start gap-2">
+                     <Info size={14} className="shrink-0 mt-0.5" />
+                     <span>PDF-tuonti toimii Nobina/HSL-tyyppisten ajolistojen kanssa, joissa on &quot;AJOLISTA n:o&quot; -muotoinen rakenne.</span>
+                   </div>
+                 </div>
+               </section>
+
+               {/* 5. Tulosten tulkinta */}
+               <section>
+                 <h3 className="text-lg font-semibold text-teal-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Calculator size={18} /> 5. Tulosten tulkinta
+                 </h3>
+                 <div className="text-sm leading-relaxed space-y-3">
+                   <p className="text-slate-400">Laskelman tuloksissa näkyy palkkaerittely oikean palkkalaskelman tyyliin:</p>
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-xs border-collapse">
+                       <thead>
+                         <tr className="border-b border-slate-700">
+                           <th className="text-left py-2 px-2 text-slate-500 font-semibold">Nimike</th>
+                           <th className="text-left py-2 px-2 text-slate-500 font-semibold">Selitys</th>
+                         </tr>
+                       </thead>
+                       <tbody className="text-slate-400">
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-slate-300 whitespace-nowrap">11000 Tuntityö</td><td className="py-2 px-2">Peruspalkka työtunneista</td></tr>
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-blue-300 whitespace-nowrap">40300 Odotusajan palkka</td><td className="py-2 px-2">Palkka yli 60 min tauoista (sidonnaisuusaika)</td></tr>
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-indigo-300 whitespace-nowrap">30020 Iltavuorolisä</td><td className="py-2 px-2">Klo 18–22, 15 % KTA:sta</td></tr>
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-purple-300 whitespace-nowrap">30030 Yövuorolisä</td><td className="py-2 px-2">Klo 22–06, 20 % KTA:sta</td></tr>
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-pink-300 whitespace-nowrap">20110 Sunnuntaitunnit</td><td className="py-2 px-2">Sunnuntaina, 100 % KTA:sta</td></tr>
+                         <tr className="border-b border-slate-800"><td className="py-2 px-2 font-medium text-teal-300 whitespace-nowrap">30060 Lauantailisä</td><td className="py-2 px-2">Lauantaina klo 15–18, 10 % KTA:sta</td></tr>
+                         <tr><td className="py-2 px-2 font-medium text-red-300 whitespace-nowrap">Arkipyhälisä</td><td className="py-2 px-2">Arkipyhänä, 100 % KTA:sta</td></tr>
+                       </tbody>
+                     </table>
+                   </div>
+                 </div>
+               </section>
+
+               {/* 6. Arkipyhät */}
+               <section>
+                 <h3 className="text-lg font-semibold text-red-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <ShieldCheck size={18} /> 6. Arkipyhät (automaattinen tunnistus)
+                 </h3>
+                 <p className="text-sm leading-relaxed text-slate-400">
+                   Sovellus tunnistaa automaattisesti Suomen viralliset arkipyhät (joulu, juhannus, pääsiäinen, itsenäisyyspäivä jne.). Arkipyhänä tehty työ oikeuttaa <strong className="text-slate-300">100 % lisään</strong>. Jos pyhä sattuu sunnuntaille, sovellus estää automaattisesti tuplabonukset.
                  </p>
                </section>
+
+               {/* 7. Jaksotyö */}
+               <section>
+                 <h3 className="text-lg font-semibold text-amber-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <Scale size={18} /> 7. Jaksotyö – 80 tunnin sääntö
+                 </h3>
+                 <div className="bg-slate-900/50 p-4 rounded-xl border border-amber-900/20 text-sm space-y-3">
+                    <p className="font-medium text-amber-200">AKT:n jaksotyössä ei ole päivittäistä ylityörajaa. Sen sijaan:</p>
+                    <ul className="list-disc ml-5 space-y-1 text-slate-400">
+                      <li>Jakso kestää <strong className="text-slate-300">14 vuorokautta</strong> (2 viikkoa, alkaa parillisesta viikosta).</li>
+                      <li>Kaikki tunnit ovat normaalipalkkaa <strong className="text-slate-300">80 tuntiin asti</strong>.</li>
+                      <li><strong className="text-slate-300">80–92 tuntia</strong> → ylityölisä +50 % KTA:sta.</li>
+                      <li><strong className="text-slate-300">Yli 92 tuntia</strong> → ylityölisä +100 % KTA:sta.</li>
+                    </ul>
+                    <div className="bg-amber-950/30 border border-amber-800/30 rounded-xl px-4 py-3 text-xs text-amber-200 flex items-start gap-2 mt-2">
+                      <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                      <span>Jaksotyöylityö näkyy vasta <strong>Omat vuorot</strong> -välilehdellä, kun olet tallentanut riittävästi vuoroja samaan jaksoon.</span>
+                    </div>
+                 </div>
+               </section>
+
+               {/* 8. Omat vuorot */}
+               <section>
+                 <h3 className="text-lg font-semibold text-purple-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   <History size={18} /> 8. Omat vuorot – Palkkajaksot
+                 </h3>
+                 <div className="text-sm leading-relaxed space-y-2 text-slate-400">
+                   <p>Tallennetut vuorot näkyvät <strong className="text-slate-300">Omat vuorot</strong> -välilehdellä:</p>
+                   <ul className="list-disc ml-5 space-y-1">
+                     <li>Vuorot ryhmitellään <strong className="text-slate-300">2 viikon palkkajaksoihin</strong>.</li>
+                     <li>Jokaiselle jaksolle lasketaan vuorojen lukumäärä, kokonaistunnit ja palkkaerittely.</li>
+                     <li>Arkipyhät merkitään punaisella 🔴 -merkillä.</li>
+                     <li>Yksittäisiä vuoroja voi poistaa roskakorikuvakkeella.</li>
+                   </ul>
+                 </div>
+               </section>
+
+               {/* Pikaohje */}
+               <section>
+                 <h3 className="text-lg font-semibold text-cyan-300 mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                   🚀 Pikaohje – Aloita näin
+                 </h3>
+                 <div className="bg-slate-900/50 p-4 rounded-xl border border-cyan-900/20 text-sm">
+                   <ol className="list-decimal ml-5 space-y-2 text-slate-400">
+                     <li>Kirjaudu sisään tai luo tili</li>
+                     <li>Valitse kokemusluokkasi asetuksista (tai syötä palkka manuaalisesti)</li>
+                     <li>Täytä KTA, jos tiedät sen (löytyy palkkalaskelmasta)</li>
+                     <li>Syötä vuoron alku, loppu ja tauot <strong className="text-slate-300">(tai lataa PDF-ajolista)</strong></li>
+                     <li>Paina <strong className="text-slate-300">&quot;Laske Palkka&quot;</strong></li>
+                     <li>Tarkista tulos ja paina <strong className="text-slate-300">&quot;Tallenna Vuoro&quot;</strong></li>
+                     <li>Seuraa jakson yhteenvetoa <strong className="text-slate-300">&quot;Omat vuorot&quot;</strong> -välilehdeltä</li>
+                   </ol>
+                 </div>
+               </section>
+
              </div>
 
              <div className="mt-8 pt-6 border-t border-slate-700 text-center">
                <p className="text-xs text-slate-500 italic">
-                 Tämä laskuri on suuntaa-antava apuväline. Tarkista lopullinen palkkasi virallisesta palkkalaskelmasta.
+                 ⚠️ Tämä laskuri on suuntaa-antava apuväline. Tarkista lopullinen palkkasi aina virallisesta palkkalaskelmasta. Laskuri ei huomioi esim. lomarahoja, erillisiä bonuksia tai verovähennyksiä.
                </p>
              </div>
           </div>
