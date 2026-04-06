@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { calculateSalary, calculateSplitShiftSalary, CalculationResult, SplitShiftResult } from "../utils/calculator";
+import { calculateSalary, calculateSplitShiftSalary, splitShiftAtMidnight, CalculationResult, SplitShiftResult } from "../utils/calculator";
 import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History, FileUp, CheckCircle, AlertCircle } from "lucide-react";
 import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
@@ -20,10 +20,6 @@ interface Shift {
   base_wage?: string;
   user_id: string;
   [key: string]: unknown; // Allow for extra DB fields if needed
-}
-
-interface AnalyzedShift extends Shift {
-  calc: CalculationResult;
 }
 
 export default function Home() {
@@ -886,7 +882,6 @@ export default function Home() {
                     });
                   } else {
                     // Yövuoro - jaa keskiyöllä
-                    const { splitShiftAtMidnight } = require("../utils/calculator");
                     const segments = splitShiftAtMidnight(sTime, eTime, bList);
                     const totalSegments = segments.length;
                     
