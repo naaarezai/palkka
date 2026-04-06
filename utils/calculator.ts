@@ -6,6 +6,7 @@ export interface ShiftInput {
   breaks: { start: Date; end: Date }[];
   baseWage?: number;
   ktaWage?: number;
+  maxUnpaidBreakMinutes?: number;
 }
 
 export interface CalculationResult {
@@ -35,7 +36,7 @@ export interface CalculationResult {
 }
 
 export function calculateSalary(input: ShiftInput): CalculationResult {
-  const { startTime, endTime, breaks, baseWage = 16.50, ktaWage } = input;
+  const { startTime, endTime, breaks, baseWage = 16.50, ktaWage, maxUnpaidBreakMinutes = 60 } = input;
   const effectiveKta = ktaWage || baseWage;
   
   let totalMinutes = 0;
@@ -63,8 +64,8 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     }
 
     if (isBreakMinute) {
-      // Rule: Cumulative first 60 mins of ALL breaks are unpaid. Excess is waiting time.
-      if (cumulativeUnpaidBreakMinutes < 60) {
+      // Rule: Cumulative first X mins of ALL breaks are unpaid. Excess is waiting time.
+      if (cumulativeUnpaidBreakMinutes < maxUnpaidBreakMinutes) {
         cumulativeUnpaidBreakMinutes++;
         // This is an unpaid break minute, do nothing for pay
       } else {
@@ -140,5 +141,163 @@ export function calculateSalary(input: ShiftInput): CalculationResult {
     holidayPay,
     totalPay
   };
+}
+
+// --- Keskiyön jako -logiikka ---
+
+export interface ShiftSegment {
+  startTime: Date;
+  endTime: Date;
+  breaks: { start: Date; end: Date }[];
+  date: Date;  // Minkä päivän palkka tämä on (segmentin alkupäivä)
+}
+
+export interface SplitShiftResult {
+  segments: { date: Date; result: CalculationResult }[];  // Per-päivä tulokset
+  combined: CalculationResult;  // Yhdistetty kokonaistulos
+}
+
+/**
+ * Jakaa vuoron keskiyökohdissa osiin.
+ * Jos vuoro ei ylitä keskiyötä, palautetaan yksi osa.
+ * Jos ylittää, palautetaan osa per päivä (esim. 22:00-06:00 → [22:00-00:00, 00:00-06:00]).
+ */
+export function splitShiftAtMidnight(
+  startTime: Date,
+  endTime: Date,
+  breaks: { start: Date; end: Date }[]
+): ShiftSegment[] {
+  const segments: ShiftSegment[] = [];
+
+  let currentStart = new Date(startTime);
+
+  while (currentStart < endTime) {
+    // Laske seuraava keskiyö
+    const nextMidnight = new Date(currentStart);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
+
+    // Segmentin loppu on joko keskiyö tai vuoron loppu, kumpi on ensin
+    const segmentEnd = nextMidnight < endTime ? nextMidnight : new Date(endTime);
+
+    // Jaa tauot tälle segmentille
+    const segmentBreaks: { start: Date; end: Date }[] = [];
+    for (const brk of breaks) {
+      const brkStart = new Date(brk.start);
+      const brkEnd = new Date(brk.end);
+
+      // Tarkista onko tauko tässä segmentissä (osittainkin)
+      if (brkStart < segmentEnd && brkEnd > currentStart) {
+        segmentBreaks.push({
+          start: brkStart < currentStart ? new Date(currentStart) : brkStart,
+          end: brkEnd > segmentEnd ? new Date(segmentEnd) : brkEnd
+        });
+      }
+    }
+
+    segments.push({
+      startTime: new Date(currentStart),
+      endTime: segmentEnd,
+      breaks: segmentBreaks,
+      date: new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate())
+    });
+
+    currentStart = segmentEnd;
+  }
+
+  return segments;
+}
+
+/**
+ * Laskee vuoron palkan jaettuna keskiyökohdissa.
+ *
+ * HUOM: Palkaton 60 min taukosääntö lasketaan koko vuoron tasolla,
+ * niin koko vuoron tauot vähennetään ensin ja odotusaika jaetaan segmenteille.
+ */
+export function calculateSplitShiftSalary(input: ShiftInput): SplitShiftResult {
+  const { startTime, endTime, breaks, baseWage = 16.50, ktaWage } = input;
+
+  const segments = splitShiftAtMidnight(startTime, endTime, breaks);
+
+  // Jos vuoro ei ylitä keskiyötä (yksi segmentti), palauta normaali laskenta
+  if (segments.length <= 1) {
+    const result = calculateSalary(input);
+    return {
+      segments: [{ date: segments[0]?.date || startTime, result }],
+      combined: result
+    };
+  }
+
+  // Laske jokainen segmentti erikseen
+  // Palkaton 60 min break -sääntö: lasketaan koko vuoron taukojen yhteismäärä ensin
+  const totalBreakMinutes = breaks.reduce((sum, brk) => {
+    return sum + Math.max(0, (brk.end.getTime() - brk.start.getTime()) / 60000);
+  }, 0);
+
+  const unpaidBreakMinutes = Math.min(totalBreakMinutes, 60);
+  const totalWaitingMinutes = Math.max(0, totalBreakMinutes - 60);
+
+  // Laske per-segmentti taukojen minuutit jakoa varten
+  const segmentBreakMinutes = segments.map(seg =>
+    seg.breaks.reduce((sum, brk) => sum + Math.max(0, (brk.end.getTime() - brk.start.getTime()) / 60000), 0)
+  );
+
+  // Jaa palkaton tauko ja odotusaika segmenteille aikajärjestyksessä
+  let remainingUnpaid = unpaidBreakMinutes;
+  const segmentUnpaidMinutes: number[] = [];
+  const segmentWaitingMinutes: number[] = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const brkMins = segmentBreakMinutes[i];
+    const unpaidForThis = Math.min(brkMins, remainingUnpaid);
+    segmentUnpaidMinutes.push(unpaidForThis);
+    segmentWaitingMinutes.push(brkMins - unpaidForThis);
+    remainingUnpaid -= unpaidForThis;
+  }
+
+  // Laske jokainen segmentti calculateSalary:llä, mutta korvaa taukologiikka
+  const segmentResults: { date: Date; result: CalculationResult }[] = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    // Lasketaan segmentti antamalla sille oikea osuus palkattomasta tauosta
+    const segResult = calculateSalary({
+      startTime: seg.startTime,
+      endTime: seg.endTime,
+      breaks: seg.breaks,  // Segmenttiin kuuluvat tauot
+      baseWage,
+      ktaWage,
+      maxUnpaidBreakMinutes: segmentUnpaidMinutes[i]
+    });
+
+    segmentResults.push({ date: seg.date, result: segResult });
+  }
+
+  // Yhdistä tulokset
+  const combined: CalculationResult = {
+    totalMinutes: segmentResults.reduce((s, r) => s + r.result.totalMinutes, 0),
+    paidMinutes: segmentResults.reduce((s, r) => s + r.result.paidMinutes, 0),
+    normalMinutes: segmentResults.reduce((s, r) => s + r.result.normalMinutes, 0),
+    waitingMinutes: segmentResults.reduce((s, r) => s + r.result.waitingMinutes, 0),
+    overtime50Minutes: 0,
+    overtime100Minutes: 0,
+    eveningMinutes: segmentResults.reduce((s, r) => s + r.result.eveningMinutes, 0),
+    nightMinutes: segmentResults.reduce((s, r) => s + r.result.nightMinutes, 0),
+    sundayMinutes: segmentResults.reduce((s, r) => s + r.result.sundayMinutes, 0),
+    saturdayMinutes: segmentResults.reduce((s, r) => s + r.result.saturdayMinutes, 0),
+    holidayMinutes: segmentResults.reduce((s, r) => s + r.result.holidayMinutes, 0),
+    normalPay: segmentResults.reduce((s, r) => s + (r.result.normalPay || 0), 0),
+    waitingPay: segmentResults.reduce((s, r) => s + (r.result.waitingPay || 0), 0),
+    overtime50Pay: 0,
+    overtime100Pay: 0,
+    eveningPay: segmentResults.reduce((s, r) => s + (r.result.eveningPay || 0), 0),
+    nightPay: segmentResults.reduce((s, r) => s + (r.result.nightPay || 0), 0),
+    sundayPay: segmentResults.reduce((s, r) => s + (r.result.sundayPay || 0), 0),
+    saturdayPay: segmentResults.reduce((s, r) => s + (r.result.saturdayPay || 0), 0),
+    holidayPay: segmentResults.reduce((s, r) => s + (r.result.holidayPay || 0), 0),
+    totalPay: segmentResults.reduce((s, r) => s + (r.result.totalPay || 0), 0),
+  };
+
+  return { segments: segmentResults, combined };
 }
 

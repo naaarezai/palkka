@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { calculateSalary, CalculationResult } from "../utils/calculator";
+import { calculateSalary, calculateSplitShiftSalary, CalculationResult, SplitShiftResult } from "../utils/calculator";
 import { Settings, Clock, Calculator, List, Save, User as UserIcon, Trash2, LogOut, Loader2, Calendar, Info, BookOpen, ShieldCheck, Scale, History, FileUp, CheckCircle, AlertCircle } from "lucide-react";
 import { isPublicHoliday } from "../utils/holidays";
 import { supabase } from "../utils/supabase";
@@ -61,6 +61,7 @@ export default function Home() {
   const [extraBreaks, setExtraBreaks] = useState<{start: string, end: string}[]>([]);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
+  const [splitResult, setSplitResult] = useState<SplitShiftResult | null>(null);
   const [savedShifts, setSavedShifts] = useState<Shift[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -308,7 +309,7 @@ export default function Home() {
 
     saveSettings();
 
-    const calcObj = calculateSalary({
+    const splitCalc = calculateSplitShiftSalary({
       startTime,
       endTime,
       breaks,
@@ -316,7 +317,8 @@ export default function Home() {
       ktaWage: ktaWage ? parseFloat(ktaWage) : undefined
     });
 
-    setResult(calcObj);
+    setSplitResult(splitCalc);
+    setResult(splitCalc.combined);
   };
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -675,6 +677,29 @@ export default function Home() {
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-600/30 shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300">
               <h2 className="text-2xl font-bold mb-6 text-white border-b border-slate-700 pb-4">Laskelman tulos</h2>
               
+              
+              {/* Yövuoron jako-indikaattori */}
+              {splitResult && splitResult.segments.length > 1 && (
+                <div className="mb-6 bg-blue-950/30 border border-blue-800/40 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                    🌙 Yövuoro jaettu keskiyöllä ({splitResult.segments.length} osaa)
+                  </div>
+                  <div className="space-y-2">
+                    {splitResult.segments.map((seg, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-slate-800/50 rounded-lg px-3 py-2 text-sm">
+                        <div className="text-slate-300">
+                          <span className="font-medium">Osa {idx + 1}:</span>{" "}
+                          {format(seg.date, "dd.MM.yyyy (EEEE)")}
+                        </div>
+                        <div className="text-emerald-400 font-semibold">
+                          {formatDuration(seg.result.paidMinutes + seg.result.waitingMinutes)} · {(seg.result.totalPay || 0).toFixed(2)} €
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50">
                   <div className="text-slate-400 text-sm mb-1">Bruttotyöaika</div>
@@ -796,256 +821,314 @@ export default function Home() {
                  <button onClick={() => setActiveTab("calculator")} className="text-blue-400 hover:underline">Lisää ensimmäinen vuoro tästä</button>
                </div>
              ) : (() => {
-               // Ryhmittele vuorot 2 viikon jaksoihin
-               const sorted = [...savedShifts].sort((a: Shift, b: Shift) => new Date(a.date).getTime() - new Date(b.date).getTime());
-               const periods: Record<string, typeof savedShifts> = {};
-               
-               sorted.forEach((shift) => {
-                 const d = new Date(shift.date);
-                 // Laske jakson alku: parillinen viikko alkaa maanantaista
-                 const dayOfWeek = d.getDay() || 7; // Ma=1...Su=7
-                 const monday = new Date(d);
-                 monday.setDate(d.getDate() - (dayOfWeek - 1));
-                 // Laske viikon numero
-                 const startOfYear = new Date(monday.getFullYear(), 0, 1);
-                 const weekNum = Math.ceil(((monday.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-                 // Parillinen viikko (esim. 16.2.2026 Viikko 8) aloittaa jakson
-                 const periodWeek = weekNum % 2 === 0 ? weekNum : weekNum - 1;
-                 const periodKey = `${monday.getFullYear()}-W${periodWeek}`;
-                 
-                 if (!periods[periodKey]) periods[periodKey] = [];
-                 periods[periodKey].push(shift);
-               });
+                // Helper: laske jaksoavain päivämäärälle
+                const getPeriodKey = (d: Date) => {
+                  const dayOfWeek = d.getDay() || 7;
+                  const monday = new Date(d);
+                  monday.setDate(d.getDate() - (dayOfWeek - 1));
+                  const startOfYear = new Date(monday.getFullYear(), 0, 1);
+                  const weekNum = Math.ceil(((monday.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+                  const periodWeek = weekNum % 2 === 0 ? weekNum : weekNum - 1;
+                  return `${monday.getFullYear()}-W${periodWeek}`;
+                };
 
-               return (
-                 <div className="space-y-6">
-                   {Object.entries(periods).map(([periodKey, shifts]) => {
-                     const periodShifts = shifts.sort((a: Shift, b: Shift) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                     const firstDate = new Date(periodShifts[0].date);
-                                      const analyzedPeriodShifts = periodShifts.map(shift => {
-                        const sTime = new Date(shift.start_input);
-                        const eTime = new Date(shift.end_input);
-                        const bList: { start: Date; end: Date }[] = [];
-                        
-                        // Parse multiple breaks from pipe-separated strings
-                        if (shift.break_start_str && shift.break_end_str) {
-                          const starts = shift.break_start_str.split("|");
-                          const ends = shift.break_end_str.split("|");
-                          
-                          const parseB = (bss: string, bes: string) => {
-                            if (!bss || !bes) return null;
-                            const bStart = new Date(sTime);
-                            const [sh, sm] = bss.split(":").map(Number);
-                            bStart.setHours(sh, sm, 0, 0);
-                            if (bStart < sTime) bStart.setDate(bStart.getDate() + 1);
-                            const bEnd = new Date(bStart);
-                            const [eh, em] = bes.split(":").map(Number);
-                            bEnd.setHours(eh, em, 0, 0);
-                            if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
-                            return { start: bStart, end: bEnd };
-                          };
-                          
-                          starts.forEach((s: string, i: number) => {
-                            const b = parseB(s, ends[i]);
-                            if (b) bList.push(b);
-                          });
-                        }
-                        
-                        // Parse extra breaks if stored (currently only first one is saved to DB columns)
-                        // If we had a JSON column we'd use it here.
+                // Ryhmittele vuorot 2 viikon jaksoihin, jakaen yövuorot keskiyöllä
+                const sorted = [...savedShifts].sort((a: Shift, b: Shift) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                
+                interface PeriodShiftEntry {
+                  shift: Shift;
+                  segmentDate: Date;
+                  segmentStart: Date;
+                  segmentEnd: Date;
+                  segmentBreaks: { start: Date; end: Date }[];
+                  isPartial: boolean;
+                  partLabel?: string;
+                }
+                
+                const periods: Record<string, PeriodShiftEntry[]> = {};
+                
+                sorted.forEach((shift) => {
+                  const sTime = new Date(shift.start_input);
+                  const eTime = new Date(shift.end_input);
+                  
+                  const bList: { start: Date; end: Date }[] = [];
+                  if (shift.break_start_str && shift.break_end_str) {
+                    const starts = shift.break_start_str.split("|");
+                    const ends = shift.break_end_str.split("|");
+                    starts.forEach((s: string, i: number) => {
+                      if (!s || !ends[i]) return;
+                      const bStart = new Date(sTime);
+                      const [bsh, bsm] = s.split(":").map(Number);
+                      bStart.setHours(bsh, bsm, 0, 0);
+                      if (bStart < sTime) bStart.setDate(bStart.getDate() + 1);
+                      const bEnd = new Date(bStart);
+                      const [beh, bem] = ends[i].split(":").map(Number);
+                      bEnd.setHours(beh, bem, 0, 0);
+                      if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
+                      bList.push({ start: bStart, end: bEnd });
+                    });
+                  }
+                  
+                  const startDay = new Date(sTime.getFullYear(), sTime.getMonth(), sTime.getDate());
+                  const endDay = new Date(eTime.getFullYear(), eTime.getMonth(), eTime.getDate());
+                  const crossesMidnight = startDay.getTime() !== endDay.getTime();
+                  
+                  if (!crossesMidnight) {
+                    const periodKey = getPeriodKey(sTime);
+                    if (!periods[periodKey]) periods[periodKey] = [];
+                    periods[periodKey].push({
+                      shift,
+                      segmentDate: startDay,
+                      segmentStart: sTime,
+                      segmentEnd: eTime,
+                      segmentBreaks: bList,
+                      isPartial: false
+                    });
+                  } else {
+                    // Yövuoro - jaa keskiyöllä
+                    const { splitShiftAtMidnight } = require("../utils/calculator");
+                    const segments = splitShiftAtMidnight(sTime, eTime, bList);
+                    const totalSegments = segments.length;
+                    
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    segments.forEach((seg: any, idx: number) => {
+                      const periodKey = getPeriodKey(seg.date);
+                      if (!periods[periodKey]) periods[periodKey] = [];
+                      periods[periodKey].push({
+                        shift,
+                        segmentDate: seg.date,
+                        segmentStart: seg.startTime,
+                        segmentEnd: seg.endTime,
+                        segmentBreaks: seg.breaks,
+                        isPartial: true,
+                        partLabel: `Osa ${idx + 1}/${totalSegments}`
+                      });
+                    });
+                  }
+                });
+
+                return (
+                  <div className="space-y-6">
+                    {Object.entries(periods).map(([periodKey, entries]) => {
+                      const periodEntries = entries.sort((a, b) => a.segmentDate.getTime() - b.segmentDate.getTime());
+                      const firstDate = periodEntries[0].segmentDate;
+                      
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const analyzedPeriodShifts: any[] = periodEntries.map(entry => {
+                        const segCalc = calculateSalary({
+                          startTime: entry.segmentStart,
+                          endTime: entry.segmentEnd,
+                          breaks: entry.segmentBreaks,
+                          baseWage: Number(entry.shift.base_wage) || parseFloat(baseWage),
+                          ktaWage: ktaWage ? parseFloat(ktaWage) : undefined
+                        });
                         
                         return {
-                          ...shift,
-                          calc: calculateSalary({
-                            startTime: sTime,
-                            endTime: eTime,
-                            breaks: bList,
-                            baseWage: Number(shift.base_wage) || parseFloat(baseWage),
-                            ktaWage: ktaWage ? parseFloat(ktaWage) : (Number(shift.kta_wage) || undefined)
-                          })
+                          ...entry.shift,
+                          calc: segCalc,
+                          isPartial: entry.isPartial,
+                          partLabel: entry.partLabel,
+                          segmentDate: entry.segmentDate,
+                          segmentStart: entry.segmentStart,
+                          segmentEnd: entry.segmentEnd
                         };
                       });
 
-                      const totalPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.totalPay || 0), 0);
-                      const totalMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.paidMinutes, 0);
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const totalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.totalPay || 0), 0);
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const totalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
+                       
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodNormalPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.normalPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodWaitingPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.waitingPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodEveningPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.eveningPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodNightPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.nightPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodSaturdayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.saturdayPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodSundayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.sundayPay || 0), 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodHolidayPay = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + (s.calc.holidayPay || 0), 0);
+
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodNormalMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.paidMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.waitingMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodEveningMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.eveningMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodNightMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.nightMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.saturdayMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodSundayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.sundayMinutes, 0);
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum: number, s: any) => sum + s.calc.holidayMinutes, 0);
+
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       const holidayShifts = analyzedPeriodShifts.filter((s: any) => isPublicHoliday(s.segmentDate));
                       
-                      // Breakdown for period
-                      const periodNormalPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.normalPay || 0), 0);
-                      const periodWaitingPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.waitingPay || 0), 0);
-                      const periodEveningPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.eveningPay || 0), 0);
-                      const periodNightPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.nightPay || 0), 0);
-                      const periodSaturdayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.saturdayPay || 0), 0);
-                      const periodSundayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.sundayPay || 0), 0);
-                      const periodHolidayPay = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + (s.calc.holidayPay || 0), 0);
+                      const totalHours = totalMinutes / 60;
+                      const periodOvertime50 = Math.max(0, Math.min(totalHours, 92) - 80);
+                      const periodOvertime100 = Math.max(0, totalHours - 92);
+                      const ktaForOt = parseFloat(ktaWage) || parseFloat(baseWage);
+                      const periodOvertimePay = (periodOvertime50 * (ktaForOt * 0.5)) + (periodOvertime100 * (ktaForOt * 1.0));
 
-                      const periodNormalMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.paidMinutes, 0);
-                      const periodWaitingMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.waitingMinutes, 0);
-                      const periodEveningMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.eveningMinutes, 0);
-                      const periodNightMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.nightMinutes, 0);
-                      const periodSaturdayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.saturdayMinutes, 0);
-                      const periodSundayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.sundayMinutes, 0);
-                      const periodHolidayMinutes = analyzedPeriodShifts.reduce((sum: number, s: AnalyzedShift) => sum + s.calc.holidayMinutes, 0);
-
-                      const holidayShifts = analyzedPeriodShifts.filter((s: AnalyzedShift) => isPublicHoliday(new Date(s.date)));
-                     
-                     // Jaksotyöylityö-logiikka (80h / 2 viikkoa)
-                     const totalHours = totalMinutes / 60;
-                     
-                     // Jakson ylityörajat: 80h asti normaali, 80-92h 50%, yli 92h 100%
-                     const periodOvertime50 = Math.max(0, Math.min(totalHours, 92) - 80);
-                     const periodOvertime100 = Math.max(0, totalHours - 92);
-                     
-                     // Lasketaan ylityölisän arvo (50% ja 100% lisäosan osuus)
-                     const ktaForOt = parseFloat(ktaWage) || parseFloat(baseWage);
-                     const periodOvertimePay = (periodOvertime50 * (ktaForOt * 0.5)) + (periodOvertime100 * (ktaForOt * 1.0));
-
-                     const lastDate = new Date(periodShifts[periodShifts.length - 1].date);
+                      const lastEntry = periodEntries[periodEntries.length - 1];
+                      const lastDate = lastEntry.segmentDate;
 
                      return (
-                       <div key={periodKey} className="space-y-3">
-                         {/* Jakson otsikko */}
-                         <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-600/30">
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center gap-3">
-                               <Calendar className="text-blue-400" size={20} />
-                               <div>
-                                 <div className="text-white font-semibold">
-                                   {format(firstDate, "dd.MM.")} — {format(lastDate, "dd.MM.yyyy")}
-                                 </div>
-                                 <div className="text-xs text-slate-400">
-                                   {periodShifts.length} vuoroa · {Math.floor(totalHours)} h {totalMinutes % 60} min
-                                   {holidayShifts.length > 0 && <span className="text-red-300 ml-2">🔴 {holidayShifts.length} pyhäpäivä</span>}
-                                 </div>
-                               </div>
-                             </div>
-                             <div className="text-right">
-                               <div className="text-emerald-400 font-black text-xl">{(totalPay + periodOvertimePay).toFixed(2)} €</div>
-                               <div className="text-xs text-slate-500">jakson arvioitu palkka</div>
-                             </div>
-                           </div>
-                           
-                           {/* Jaksotyöylityö-ilmoitus */}
-                           {(periodOvertime50 > 0 || periodOvertime100 > 0) && (
-                             <div className="mt-2 py-2 px-3 bg-amber-950/20 border border-amber-900/30 rounded-lg flex items-center justify-between text-xs">
-                               <span className="text-amber-200 flex items-center gap-2">
-                                 <Settings size={14} />
-                                 Jakson ylityö (vasta 80h jälkeen): {periodOvertime50 > 0 && `${periodOvertime50.toFixed(1)}h (50%)`} {periodOvertime100 > 0 && `${periodOvertime100.toFixed(1)}h (100%)`}
-                               </span>
-                               <span className="text-amber-300 font-bold">+ {periodOvertimePay.toFixed(2)} €</span>
-                             </div>
-                           )}
-
-                           {/* Jakson erittely */}
-                           <div className="mt-2 space-y-1 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                            <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
-                              <span>Nimike</span>
-                              <span className="text-right">Yksiköt</span>
-                              <span className="text-right">A-hinta</span>
-                              <span className="text-right">Euroa</span>
+                        <div key={periodKey} className="space-y-3">
+                          {/* Jakson otsikko */}
+                          <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-600/30">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <Calendar className="text-blue-400" size={20} />
+                                <div>
+                                  <div className="text-white font-semibold">
+                                    {format(firstDate, "dd.MM.")} — {format(lastDate, "dd.MM.yyyy")}
+                                  </div>
+                                  <div className="text-xs text-slate-400">
+                                    {periodEntries.length} merkintää · {Math.floor(totalHours)} h {totalMinutes % 60} min
+                                    {periodEntries.some(e => e.isPartial) && <span className="text-blue-300 ml-2">🌙 yövuoroja jaettu</span>}
+                                    {holidayShifts.length > 0 && <span className="text-red-300 ml-2">🔴 {holidayShifts.length} pyhäpäivä</span>}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-emerald-400 font-black text-xl">{(totalPay + periodOvertimePay).toFixed(2)} €</div>
+                                <div className="text-xs text-slate-500">jakson arvioitu palkka</div>
+                              </div>
                             </div>
+                            
+                            {(periodOvertime50 > 0 || periodOvertime100 > 0) && (
+                              <div className="mt-2 py-2 px-3 bg-amber-950/20 border border-amber-900/30 rounded-lg flex items-center justify-between text-xs">
+                                <span className="text-amber-200 flex items-center gap-2">
+                                  <Settings size={14} />
+                                  Jakson ylityö (vasta 80h jälkeen): {periodOvertime50 > 0 && `${periodOvertime50.toFixed(1)}h (50%)`} {periodOvertime100 > 0 && `${periodOvertime100.toFixed(1)}h (100%)`}
+                                </span>
+                                <span className="text-amber-300 font-bold">+ {periodOvertimePay.toFixed(2)} €</span>
+                              </div>
+                            )}
 
-                             <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-slate-400">
-                               <span>11000 Tuntityö</span>
-                               <span className="text-right">{formatDuration(periodNormalMinutes)}</span>
-                               <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
-                               <span className="text-right font-medium">{periodNormalPay.toFixed(2)}</span>
+                            <div className="mt-2 space-y-1 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                             <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-[10px] text-slate-500 uppercase font-bold mb-1 border-b border-slate-700/30 pb-1">
+                               <span>Nimike</span>
+                               <span className="text-right">Yksiköt</span>
+                               <span className="text-right">A-hinta</span>
+                               <span className="text-right">Euroa</span>
                              </div>
-                             
-                             {periodWaitingMinutes > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-blue-400/80">
-                                 <span>40300 Odotusajan palkka</span>
-                                 <span className="text-right">{formatDuration(periodWaitingMinutes)}</span>
-                                 <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
-                                 <span className="text-right font-medium">{periodWaitingPay.toFixed(2)}</span>
-                               </div>
-                             )}
 
-                              {periodEveningPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-indigo-400/80">
-                                  <span>30020 Iltavuorolisä</span>
-                                  <span className="text-right">{formatDuration(periodEveningMinutes)}</span>
-                                  <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus)/100) ).toFixed(2)}</span>
-                                  <span className="text-right font-medium">{periodEveningPay.toFixed(2)}</span>
+                              <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-slate-400">
+                                <span>11000 Tuntityö</span>
+                                <span className="text-right">{formatDuration(periodNormalMinutes)}</span>
+                                <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
+                                <span className="text-right font-medium">{periodNormalPay.toFixed(2)}</span>
+                              </div>
+                              
+                              {periodWaitingMinutes > 0 && (
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-blue-400/80">
+                                  <span>40300 Odotusajan palkka</span>
+                                  <span className="text-right">{formatDuration(periodWaitingMinutes)}</span>
+                                  <span className="text-right">{parseFloat(baseWage).toFixed(2)}</span>
+                                  <span className="text-right font-medium">{periodWaitingPay.toFixed(2)}</span>
                                 </div>
                               )}
-                              {periodNightPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-purple-400/80">
-                                  <span>30030 Yövuorolisä</span>
-                                  <span className="text-right">{formatDuration(periodNightMinutes)}</span>
-                                  <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus)/100) ).toFixed(2)}</span>
-                                  <span className="text-right font-medium">{periodNightPay.toFixed(2)}</span>
-                                </div>
-                              )}
-                              {periodSaturdayPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-teal-400/80">
-                                  <span>30060 Lauantailisä</span>
-                                  <span className="text-right">{formatDuration(periodSaturdayMinutes)}</span>
-                                  <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
-                                  <span className="text-right font-medium">{periodSaturdayPay.toFixed(2)}</span>
-                                </div>
-                              )}
-                              {periodSundayPay > 0 && (
-                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-pink-400/80">
-                                  <span>20110 Sunnuntaitunnit</span>
-                                  <span className="text-right">{formatDuration(periodSundayMinutes)}</span>
-                                  <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus)/100) ).toFixed(2)}</span>
-                                  <span className="text-right font-medium">{periodSundayPay.toFixed(2)}</span>
-                                </div>
-                              )}
-                             {periodHolidayPay > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-red-400/80">
-                                 <span>Arkipyhälisä</span>
-                                 <span className="text-right">{formatDuration(periodHolidayMinutes)}</span>
-                                 <span className="text-right">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
-                                 <span className="text-right font-medium">{periodHolidayPay.toFixed(2)}</span>
-                               </div>
-                             )}
-                             {periodOvertimePay > 0 && (
-                               <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-amber-400/80 pt-1 border-t border-slate-700/50">
-                                 <span>Ylityölisät (50% & 100%)</span>
-                                 <span className="text-right">-</span>
-                                 <span className="text-right">-</span>
-                                 <span className="text-right font-medium">{periodOvertimePay.toFixed(2)}</span>
-                               </div>
-                             )}
-                           </div>
-                         </div>
-                         
-                         {/* Jakson vuorot */}
-                         <div className="space-y-2 ml-2">
-                           {periodShifts.map((shift) => {
-                             const shiftDate = new Date(shift.date);
-                             const isHoliday = isPublicHoliday(shiftDate);
-                             return (
-                               <div key={shift.id} className={`bg-slate-900/50 border p-4 rounded-xl flex justify-between items-center group hover:border-slate-500 transition shadow-sm ${isHoliday ? 'border-red-800/50' : 'border-slate-700'}`}>
-                                 <div className="space-y-1">
-                                   <div className="text-white font-semibold flex items-center gap-2">
-                                     {format(shiftDate, "dd.MM.yyyy (EEEE)")}
-                                     {isHoliday && <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded-full">Pyhäpäivä</span>}
-                                   </div>
-                                   <div className="text-sm text-slate-400">
-                                     {format(new Date(shift.start_input), "HH:mm")} - {format(new Date(shift.end_input), "HH:mm")}
-                                   </div>
-                                   <div className="text-emerald-400 font-bold text-lg">
-                                     {(Number(shift.total_pay) || 0).toFixed(2)} €
-                                   </div>
+
+                               {periodEveningPay > 0 && (
+                                 <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-indigo-400/80">
+                                   <span>30020 Iltavuorolisä</span>
+                                   <span className="text-right">{formatDuration(periodEveningMinutes)}</span>
+                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(eveningBonus)/100) ).toFixed(2)}</span>
+                                   <span className="text-right font-medium">{periodEveningPay.toFixed(2)}</span>
                                  </div>
-                                 <button 
-                                  onClick={() => handleDeleteShift(shift.id)}
-                                  className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition sm:opacity-0 sm:group-hover:opacity-100"
-                                 >
-                                   <Trash2 size={18} />
-                                 </button>
-                               </div>
-                             );
-                           })}
-                         </div>
-                       </div>
-                     );
-                   })}
-                 </div>
-               );
-              })()}
+                               )}
+                               {periodNightPay > 0 && (
+                                 <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-purple-400/80">
+                                   <span>30030 Yövuorolisä</span>
+                                   <span className="text-right">{formatDuration(periodNightMinutes)}</span>
+                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(nightBonus)/100) ).toFixed(2)}</span>
+                                   <span className="text-right font-medium">{periodNightPay.toFixed(2)}</span>
+                                 </div>
+                               )}
+                               {periodSaturdayPay > 0 && (
+                                 <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-teal-400/80">
+                                   <span>30060 Lauantailisä</span>
+                                   <span className="text-right">{formatDuration(periodSaturdayMinutes)}</span>
+                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * 0.10 ).toFixed(2)}</span>
+                                   <span className="text-right font-medium">{periodSaturdayPay.toFixed(2)}</span>
+                                 </div>
+                               )}
+                               {periodSundayPay > 0 && (
+                                 <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-pink-400/80">
+                                   <span>20110 Sunnuntaitunnit</span>
+                                   <span className="text-right">{formatDuration(periodSundayMinutes)}</span>
+                                   <span className="text-right">{( (parseFloat(ktaWage) || parseFloat(baseWage)) * (parseFloat(sundayBonus)/100) ).toFixed(2)}</span>
+                                   <span className="text-right font-medium">{periodSundayPay.toFixed(2)}</span>
+                                 </div>
+                               )}
+                              {periodHolidayPay > 0 && (
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-red-400/80">
+                                  <span>Arkipyhälisä</span>
+                                  <span className="text-right">{formatDuration(periodHolidayMinutes)}</span>
+                                  <span className="text-right">{(parseFloat(ktaWage) || parseFloat(baseWage)).toFixed(2)}</span>
+                                  <span className="text-right font-medium">{periodHolidayPay.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {periodOvertimePay > 0 && (
+                                <div className="grid grid-cols-[1fr_repeat(3,minmax(55px,80px))] gap-1.5 text-xs text-amber-400/80 pt-1 border-t border-slate-700/50">
+                                  <span>Ylityölisät (50% & 100%)</span>
+                                  <span className="text-right">-</span>
+                                  <span className="text-right">-</span>
+                                  <span className="text-right font-medium">{periodOvertimePay.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Jakson vuorot */}
+                          <div className="space-y-2 ml-2">
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            {analyzedPeriodShifts.map((entry: any, idx: number) => {
+                              const shiftDate = entry.segmentDate || new Date(entry.date);
+                              const isHoliday = isPublicHoliday(shiftDate);
+                              return (
+                                <div key={`${entry.id}-${idx}`} className={`bg-slate-900/50 border p-4 rounded-xl flex justify-between items-center group hover:border-slate-500 transition shadow-sm ${isHoliday ? 'border-red-800/50' : entry.isPartial ? 'border-blue-800/50' : 'border-slate-700'}`}>
+                                  <div className="space-y-1">
+                                    <div className="text-white font-semibold flex items-center gap-2">
+                                      {format(shiftDate, "dd.MM.yyyy (EEEE)")}
+                                      {entry.isPartial && <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded-full">🌙 {entry.partLabel}</span>}
+                                      {isHoliday && <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded-full">Pyhäpäivä</span>}
+                                    </div>
+                                    <div className="text-sm text-slate-400">
+                                      {format(entry.segmentStart || new Date(entry.start_input), "HH:mm")} - {format(entry.segmentEnd || new Date(entry.end_input), "HH:mm")}
+                                      {entry.isPartial && <span className="text-blue-400 ml-2 text-xs">(alkuperäinen: {format(new Date(entry.start_input), "HH:mm")}–{format(new Date(entry.end_input), "HH:mm")})</span>}
+                                    </div>
+                                    <div className="text-emerald-400 font-bold text-lg">
+                                      {(entry.calc.totalPay || 0).toFixed(2)} €
+                                    </div>
+                                  </div>
+                                  <button 
+                                   onClick={() => handleDeleteShift(entry.id)}
+                                   className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition sm:opacity-0 sm:group-hover:opacity-100"
+                                   title={entry.isPartial ? "Poistaa koko yövuoron" : "Poista vuoro"}
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+               })()}
           </div>
         </div>
       )}
